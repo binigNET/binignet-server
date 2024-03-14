@@ -59,13 +59,13 @@ storage_path = "sql:mode=mysql;host=pvpgn-db;name=bnetd;user=bnetd;pass=secret;d
 ```
 1. Up pvpgn database.
 ```shell
-docker-compose up -d pvpgn-db
+docker compose up -d pvpgn-db
 ```
 
 ### 🚛 Create Ghost Database Schemas and run seeders (*)
 1. Seed database.
 ```shell
-docker-compose up -d ghostpp-db
+docker compose up -d ghostpp-db
 docker exec -i ghostpp_databse mysql -ughost -psecret ghost < ghostpp/db-schema.sql
 docker exec -i ghostpp_databse mysql -ughost -psecret ghost < ghostpp/db-populate.sql
 ```
@@ -73,7 +73,7 @@ docker exec -i ghostpp_databse mysql -ughost -psecret ghost < ghostpp/db-populat
 ### 🚩 Start pvpgn, d2cs, d2dbs and ghostpp services (*)
  
 ```shell
-docker-compose up -d pvpgn d2cs d2dbs ghostpp
+docker compose up -d pvpgn ghostpp
 ```
 
 ### 🔀 Configure address translation for docker network (*)
@@ -95,7 +95,7 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ghos
 #----------------------------------------------------------------------------
 #
 ```
-3. Restart pvpgn service `docker-compose restart pvpgn`
+3. Restart pvpgn service `docker compose restart pvpgn`
 
 ### 🤖 Bot Account creation (*)
 
@@ -114,7 +114,7 @@ cp ghostpp/config/default.cfg ghostpp/config/ghost.cfg
 bnet_username = bot
 bnet_password = secret
 ```
-3. Restart ghost service `docker-compose restart ghostpp`
+3. Restart ghost service `docker compose restart ghostpp`
 
 ### 🎮 Invite friends and play (*)
 
@@ -126,7 +126,7 @@ bnet_password = secret
 ```shell
 bnet_rootadmin = yourAccount friendAccount otherFriend
 ```
-2. Restart ghost service `docker-compose restart ghostpp`
+2. Restart ghost service `docker compose restart ghostpp`
 
 ### 🕹 Commands (*)
 
@@ -148,7 +148,7 @@ $ladderroot = "https://stats-domain.com/"; # include last /
 ```
 3. Up pvpgn stats.
 ```shell
-docker-compose up -d pvpgn-stats
+docker compose up -d pvpgn-stats
 ```
 4. Run Seeders.
 ```shell
@@ -160,7 +160,7 @@ docker exec -i pvpgn_databse mysql -ubnetd -psecret bnetd < pvpgn-stats/migratio
 ### 📊 [Optional] Setup Dota OpenStats (*)
 1. Up service.
 ```shell
-docker-compose up -d dota-stats
+docker compose up -d dota-stats
 ```
 2. Set stats page. Edit the file `pvpgn/etc/pvpgn/anongame_infos.conf` and set the following settings.
 ```shell
@@ -173,18 +173,18 @@ server_URL = https://dota-stats-domain.com
 ```
 3. Restart pvpgn server
 ```shell
-docker-compose restart pvpgn
+docker compose restart pvpgn
 ```
 4. Open in browser [Pvpgn Stats](🌐 http://127.0.0.1:9081/)
 
 ### 📄 View Logs (*)
 #### Pvpgn Logs
 ```shell
-docker-compose logs -f --tail 200 pvpgn
+docker compose logs -f --tail 200 pvpgn
 ```
 #### Ghost++ Logs
 ```shell
-docker-compose logs -f --tail 200 ghostpp
+docker compose logs -f --tail 200 ghostpp
 ```
 
 ### ✉️ Contact

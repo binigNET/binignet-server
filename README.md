@@ -1,10 +1,5 @@
 # 🕶 PVPGN PRO ➕ GHOST++ ➕ WEB STATS
 
-![Status](https://img.shields.io/badge/status-active-success.svg)
-[![GitHub Issues](https://img.shields.io/github/issues/acollazo25/pvpgn-ghost-docker.svg)](https://github.com/acollazo25/pvpgn-ghost-docker/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/wwmoraes/pvpgn-server-docker.svg)](https://github.com/acollazo25/pvpgn-ghost-docker/pulls)
----
-
 ## Deployment (WINDOWS / LINUX / MAC)
 
 > **ℹ️ NOTE:** The Ghost configuration is designed to work with the ***Warcraft 1.26x*** client, but you can adjust it to work with ***1.28x*** or higher. The default map is ***dota-6.83d-en.w3x***, but any other is possible.
@@ -26,6 +21,7 @@ cd pvpgn-ghost-docker
 mkdir "pvpgn"
 docker run --rm -v $PWD/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
+docker run --rm -v $PWD/pvpgn/files:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /pvpgn-server/files /tmp/files
 ```
 
 ### 📦 Export pvpgn data (WINDOWS)
@@ -34,6 +30,7 @@ docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs
 mkdir "pvpgn"
 docker run --rm -v %CD%/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v %CD%/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
+docker run --rm -v %CD%/pvpgn/files:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /pvpgn-server/files /tmp/files
 ```
 
 ### ⚙ Copy default config (*)

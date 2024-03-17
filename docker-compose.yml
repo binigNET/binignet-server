@@ -16,6 +16,7 @@ services:
     volumes:
       - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
       - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
+      - ./pvpgn/files:/pvpgn-server/files
     networks:
       - internal
 

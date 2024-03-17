@@ -73,8 +73,6 @@ services:
     restart: unless-stopped
     container_name: ghostpp_databse
     image: ender25/pvpgn-server:mysql-db
-    ports:
-      - 127.0.0.1:3306:3306
     volumes:
       - ./ghostpp/database:/var/lib/mysql
     environment:

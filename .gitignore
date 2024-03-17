@@ -11,5 +11,6 @@ ghostpp/config/ghost.cfg
 ghostpp/config/ghost.*.cfg
 ghostpp/config/blizzard.j
 ghostpp/config/common.j
+ghostpp/maps
 help_repos
 docker-compose.v*.yml

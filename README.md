@@ -18,7 +18,6 @@ cd pvpgn-ghost-docker
 ### 📦 Export pvpgn data (LINUX / MAC)
 
 ```shell
-mkdir "pvpgn"
 docker run --rm -v $PWD/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
 docker run --rm -v $PWD/pvpgn/files:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /pvpgn-server /tmp/files

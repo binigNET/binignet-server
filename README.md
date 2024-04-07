@@ -20,7 +20,6 @@ cd pvpgn-ghost-docker
 ```shell
 docker run --rm -v $PWD/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
-docker run --rm -v $PWD/pvpgn:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /pvpgn-server/files/ /tmp/files
 ```
 
 ### 📦 Export pvpgn data (WINDOWS)
@@ -29,7 +28,6 @@ docker run --rm -v $PWD/pvpgn:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-m
 mkdir "pvpgn"
 docker run --rm -v %CD%/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v %CD%/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
-docker run --rm -v %CD%/pvpgn/files:/tmp/files ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /pvpgn-server/files /tmp/files
 ```
 
 ### ⚙ Copy default config (*)

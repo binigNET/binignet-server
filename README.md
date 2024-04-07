@@ -6,7 +6,6 @@
 
 ### 🛠 Requirements
 1. [Docker](https://www.docker.com/products/docker-desktop)
-2. [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### ⬇️ Clone repo (*)
 
@@ -25,7 +24,6 @@ docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs
 ### 📦 Export pvpgn data (WINDOWS)
 
 ```shell
-mkdir "pvpgn"
 docker run --rm -v %CD%/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
 docker run --rm -v %CD%/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
 ```

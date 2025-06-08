@@ -128,111 +128,111 @@ If sent via any game lobby or any game the bot will respond with a private messa
 ---
   
 
-!a alias to !abort
+**!a** alias to **!abort**
 
-!abort abort countdown
+**!abort** abort countdown
 
-!addban {name} [reason] add a new ban to the database (it tries to do a partial match)
+**!addban {name} [reason]** add a new ban to the database (it tries to do a partial match)
 
-!announce {sec} {msg} set the announce message (the bot will print {msg} every {sec} seconds), leave blank or "off" to disable the announce message
+**!announce {sec} {msg}** set the announce message (the bot will print **{msg}** every **{sec}** seconds), leave blank or "off" to disable the announce message
 
-!autostart {players} auto start the game when the specified number of players have joined, leave blank or "off" to disable auto start
+**!autostart {players}** auto start the game when the specified number of players have joined, leave blank or "off" to disable auto start
 
-!autosave {on/off} enable or disable autosaving
+**!autosave {on/off}** enable or disable autosaving
 
-!ban alias to !addban
+**!ban** alias to **!addban**
 
-!check {name} check a user's status (leave blank to check your own status)
+**!check {name}** check a user's status (leave blank to check your own status)
 
-!checkban {name} check if a user is banned on any realm
+**!checkban {name}** check if a user is banned on any realm
 
-!checkme check your own status (can be used by non admins, sends a private message visible only to the user)
+**!checkme** check your own status (can be used by non admins, sends a private message visible only to the user)
 
-!clearhcl clear the HCL command string
+**!clearhcl** clear the HCL command string
 
-!close {number} ... close slot
+**!close {number}** ... close slot
 
-!closeall close all open slots
+**!closeall** close all open slots
 
-!comp {slot} {skill} create a computer in slot {slot} of skill {skill} (skill is 0 for easy, 1 for normal, 2 for insane)
+**!comp {slot} {skill}** create a computer in slot **{slot}** of skill **{skill}** (skill is 0 for easy, 1 for normal, 2 for insane)
 
-!compcolour {s} {c} change a computer's colour in slot {s} to {c} (c goes from 1 to 12)
+!**compcolour {s} {c}** change a computer's colour in slot **{s}** to **{c}** (c goes from 1 to 12)
 
-!comphandicap {s} {h} change a computer's handicap in slot {s} to {h} (h is 50, 60, 70, 80, 90, or 100)
+**!comphandicap {s} {h}** change a computer's handicap in slot **{s}** to **{h}** (h is 50, 60, 70, 80, 90, or 100)
 
-!comprace {s} {r} change a computer's race in slot {s} to {r} (r is "human", "orc", "night elf", "undead", or "random")
+**!comprace {s} {r}** change a computer's race in slot **{s}** to **{r}** (r is "human", "orc", "night elf", "undead", or "random")
 
-!compteam {s} {t} change a computer's team in slot {s} to {t} (t goes from 1 to # of teams)
+**!compteam {s} {t}** change a computer's team in slot **{s}** to **{t}** (t goes from 1 to # of teams)
 
-!dl {name} alias to !download
+**!dl {name}** alias to **!download**
 
-!download {name} allow a user to start downloading the map (only used with conditional map downloads, it tries to do a partial match)
+**!download {name}** allow a user to start downloading the map (only used with conditional map downloads, it tries to do a partial match)
 
-!fakeplayer create or delete a fake player to occupy a slot during the game (the player will not do anything except stay AFK)
+**!fakeplayer** create or delete a fake player to occupy a slot during the game (the player will not do anything except stay AFK)
 
-!from display the country each player is from
+**!from** display the country each player is from
 
-!hcl {string} set the HCL command string
+**!hcl {string}** set the HCL command string
 
-!hold {name} ... hold a slot for someone
+**!hold {name}** ... hold a slot for someone
 
-!kick {name} kick a player (it tries to do a partial match)
+**!kick {name}** kick a player (it tries to do a partial match)
 
-!latency {number} set game latency (20-500), leave blank to see current latency
+**!latency {number}** set game latency (20-500), leave blank to see current latency
 
-!lock lock the game so only the game owner can run commands
+**!lock** lock the game so only the game owner can run commands
 
-!messages {on/off} enable or disable local admin messages for this game (battle.net messages relayed to local admins in game)
+**!messages {on/off}** enable or disable local admin messages for this game (battle.net messages relayed to local admins in game)
 
-!mute {name} mute a player (it tries to do a partial match)
+**!mute {name}** mute a player (it tries to do a partial match)
 
-!open {number} ... open slot
+**!open {number}** ... open slot
 
-!openall open all closed slots
+**!openall** open all closed slots
 
-!owner [name] set game owner to yourself, optionally add [name] to set game owner to someone else
+**!owner [name]** set game owner to yourself, optionally add **[name]** to set game owner to someone else
 
-!ping [number] ping players, optionally add [number] to kick players with ping above [number]
+**!ping [number]** ping players, optionally add **[number]** to kick players with ping above **[number]**
 
-!priv {name} rehost as private game
+**!priv {name}** rehost as private game
 
-!pub {name} rehost as public game
+**!pub {name}** rehost as public game
 
-!refresh {on/off} enable or disable refresh messages
+**!refresh {on/off}** enable or disable refresh messages
 
-!say {text} send {text} to all connected battle.net realms as a chat command (this command is HIDDEN from other players)
+**!say {text}** send **{text}** to all connected battle.net realms as a chat command (this command is HIDDEN from other players)
 
-!sendlan {ip} [port] send a fake LAN message to IP address {ip} and port [port], default port is 6112 if not specified
+**!sendlan {ip} [port]** send a fake LAN message to IP address **{ip}** and port **[port]**, default port is 6112 if not specified
 
-!sp shuffle players
+**!sp** shuffle players
 
-!start [force] start game, optionally add [force] to skip checks
+**!start [force]** start game, optionally add **[force]** to skip checks
 
-!stats [name] display basic player statistics, optionally add [name] to display statistics for another player (can be used by non admins)
+**!stats [name]** display basic player statistics, optionally add **[name]** to display statistics for another player (can be used by non admins)
 
-!statsdota [name] display DotA player statistics, optionally add [name] to display statistics for another player (can be used by non admins)
+**!statsdota [name]** display DotA player statistics, optionally add **[name]** to display statistics for another player (can be used by non admins)
 
-!swap {n1} {n2} swap slots
+**!swap {n1} {n2}** swap slots
 
-!synclimit {number} set sync limit for the lag screen (10-10000), leave blank to see current sync limit
+**!synclimit {number}** set sync limit for the lag screen (10-10000), leave blank to see current sync limit
 
-!unhost unhost game
+**!unhost** unhost game
 
-!unlock unlock the game
+**!unlock** unlock the game
 
-!unmute {name} unmute a player (it tries to do a partial match)
+**!unmute {name}** unmute a player (it tries to do a partial match)
 
-!version display version information (can be used by non admins, sends a private message visible only to the user)
+**!version** display version information (can be used by non admins, sends a private message visible only to the user)
 
-!virtualhost {name} change the virtual host name
+**!virtualhost {name}** change the virtual host name
 
-!votecancel cancel a votekick
+**!votecancel** cancel a votekick
 
-!votekick {name} start a votekick (it tries to do a partial match, can be used by non admins)
+**!votekick {name}** start a votekick (it tries to do a partial match, can be used by non admins)
 
-!w {name} {message} send a whisper on every connected battle.net realm from the bot's account to the player called {name} (this command is HIDDEN from other players)
+**!w {name} {message}** send a whisper on every connected battle.net realm from the bot's account to the player called **{name}** (this command is HIDDEN from other players)
 
-!yes register a vote in the votekick (can be used by non admins)
+**!yes** register a vote in the votekick (can be used by non admins)
 
   
 

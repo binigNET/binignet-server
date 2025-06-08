@@ -10,8 +10,8 @@
 ### ⬇️ Clone repo (*)
 
 ```shell
-git clone https://github.com/acollazo25/pvpgn-ghost-docker.git
-cd pvpgn-ghost-docker
+git clone https://github.com/binigNET/binignet-server.git
+cd binignet-server
 ```
 
 ### 📦 Export pvpgn data (LINUX / MAC)
@@ -122,7 +122,7 @@ bnet_rootadmin = yourAccount friendAccount otherFriend
 
 ### 🕹 Commands (*)
 
-1. To see the list of available commands visit [Ghost++ Commands](https://wiki.eurobattle.net/index.php/Ghost++:Commands)
+1. To see the list of available commands visit [Ghost++ Commands](https://github.com/binigNET/binignet-server/blob/main/ghost-commands.md)
 
 ### 📊 [Optional] Setup Pvpgn Stats (*)
 1. Copy `pvpgn-stats/config.inc.example.php` to `pvpgn-stats/config.inc.php`.
@@ -180,7 +180,7 @@ docker compose logs -f --tail 200 ghostpp
 ```
 
 ### ✉️ Contact
-[Creating an issue](https://github.com/acollazo25/pvpgn-ghost-docker/issues)
+[Creating an issue](https://github.com/binigNET/binignet-server/issues)
 
 ### 🎉 Acknowledgements
 -   [🙌 Pvpgn Official Page](https://pvpgn.pro/)
@@ -188,3 +188,4 @@ docker compose logs -f --tail 200 ghostpp
 -   [🙌 Pvpgn Docker Repo](https://github.com/wwmoraes/pvpgn-server-docker)
 -   [🙌 Ghost++ Stable Repo](https://github.com/uakfdotb/ghostpp)
 -   [🙌 Ghost++ Docker Repo](https://github.com/Fatorin/ghostpp_docker)
+-   [🙌 Pvpgn Ghost Docker Repo](https://github.com/acollazo25/pvpgn-ghost-docker)

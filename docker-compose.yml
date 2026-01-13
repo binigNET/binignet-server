@@ -142,6 +142,9 @@ services:
 
 networks:
   internal:
+    driver: bridge
   proxy:
-    external: true
+    name: proxy
+    driver: bridge
+#    external: true
 

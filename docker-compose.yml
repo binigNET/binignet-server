@@ -45,22 +45,22 @@ services:
     networks:
       - internal
 
-  pvpgn-stats:
-    restart: unless-stopped
-    container_name: pvppg_stats_server
-    depends_on:
-      - pvpgn-db
-    image: ender25/pvpgn-server:web-server
-    volumes:
-      - ./pvpgn-stats:/var/www/html
-      - ./pvpgn/var/pvpgn/ladders:/ladders
-    ports:
-      - 9082:80
-    env_file:
-      - pvpgn/.env
-    networks:
-      - internal
-      - proxy
+  # pvpgn-stats:
+  #   restart: unless-stopped
+  #   container_name: pvppg_stats_server
+  #   depends_on:
+  #     - pvpgn-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./pvpgn-stats:/var/www/html
+  #     - ./pvpgn/var/pvpgn/ladders:/ladders
+  #   ports:
+  #     - 9082:80
+  #   env_file:
+  #     - pvpgn/.env
+  #   networks:
+  #     - internal
+  #     - proxy
 
   ghostpp:
     restart: unless-stopped
@@ -111,34 +111,34 @@ services:
     networks:
       - internal
 
-  dota-stats:
-    restart: unless-stopped
-    container_name: dota_stats_server
-    depends_on:
-      - ghostpp-db
-    image: ender25/pvpgn-server:web-server
-    volumes:
-      - ./dota-stats:/var/www/html
-    ports:
-      - 9081:80
-    env_file:
-      - ghostpp/.env
-    networks:
-      - internal
-      - proxy
+  # dota-stats:
+  #   restart: unless-stopped
+  #   container_name: dota_stats_server
+  #   depends_on:
+  #     - ghostpp-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./dota-stats:/var/www/html
+  #   ports:
+  #     - 9081:80
+  #   env_file:
+  #     - ghostpp/.env
+  #   networks:
+  #     - internal
+  #     - proxy
 
-  phpmyadmin:
-    restart: unless-stopped
-    container_name: pvpgn_database_admin
-    depends_on:
-      - ghostpp-db
-    image: phpmyadmin/phpmyadmin
-    ports:
-      - 127.0.0.1:8085:80
-    environment:
-      PMA_HOSTS: "pvpgn-db,ghostpp-db"
-    networks:
-      - internal
+  # phpmyadmin:
+  #   restart: unless-stopped
+  #   container_name: pvpgn_database_admin
+  #   depends_on:
+  #     - ghostpp-db
+  #   image: phpmyadmin/phpmyadmin
+  #   ports:
+  #     - 127.0.0.1:8085:80
+  #   environment:
+  #     PMA_HOSTS: "pvpgn-db,ghostpp-db"
+  #   networks:
+  #     - internal
 
 networks:
   internal:

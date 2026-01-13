@@ -12,3 +12,4 @@ ghostpp/config/common.j
 ghostpp/maps
 help_repos
 docker-compose.v*.yml
+.DS_Store

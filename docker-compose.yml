@@ -10,8 +10,8 @@ services:
     entrypoint: >
       /bin/sh -c "
       echo 'Configuring Address Translation...' &&
-      GHOST_IP=\$(getent hosts ghostpp | awk '{ print \$1 }') &&
-      echo \"\$GHOST_IP:6320 \$PUBLIC_IP:6320 NONE ANY\" > /usr/local/etc/pvpgn/address_translation.conf &&
+      GHOST_IP=\$$(getent hosts ghostpp | awk '{ print \$1 }') &&
+      echo \"\$$GHOST_IP:6320 \$PUBLIC_IP:6320 NONE ANY\" > /usr/local/etc/pvpgn/address_translation.conf &&
       echo 'Starting PvPGN...' &&
       /usr/local/sbin/bnetd -f
       "

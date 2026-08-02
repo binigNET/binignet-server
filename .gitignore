@@ -2,8 +2,6 @@
 .env
 pvpgn/.env
 ghostpp/.env
-pvpgn/var
-pvpgn/etc
 pvpgn/database
 pvpgn-stats/config.inc.php
 ghostpp/database
@@ -14,3 +12,4 @@ ghostpp/config/common.j
 ghostpp/maps
 help_repos
 docker-compose.v*.yml
+.DS_Store

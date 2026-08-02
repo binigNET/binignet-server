@@ -5,6 +5,16 @@ services:
     restart: unless-stopped
     container_name: pvpgn_server
     image: ender25/pvpgn-server:bnetd-mysql
+    environment:
+      - PUBLIC_IP=${PUBLIC_IP}
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Configuring Address Translation...' &&
+      GHOST_IP=\$$(getent hosts ghostpp | awk '{ print \$1 }') &&
+      echo \"\$$GHOST_IP:6320 \$PUBLIC_IP:6320 NONE ANY\" > /usr/local/etc/pvpgn/address_translation.conf &&
+      echo 'Starting PvPGN...' &&
+      /usr/local/sbin/bnetd -f
+      "
     user: root
     ports:
       - 6112:6112
@@ -35,22 +45,22 @@ services:
     networks:
       - internal
 
-  pvpgn-stats:
-    restart: unless-stopped
-    container_name: pvppg_stats_server
-    depends_on:
-      - pvpgn-db
-    image: ender25/pvpgn-server:web-server
-    volumes:
-      - ./pvpgn-stats:/var/www/html
-      - ./pvpgn/var/pvpgn/ladders:/ladders
-    ports:
-      - 9082:80
-    env_file:
-      - pvpgn/.env
-    networks:
-      - internal
-      - proxy
+  # pvpgn-stats:
+  #   restart: unless-stopped
+  #   container_name: pvppg_stats_server
+  #   depends_on:
+  #     - pvpgn-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./pvpgn-stats:/var/www/html
+  #     - ./pvpgn/var/pvpgn/ladders:/ladders
+  #   ports:
+  #     - 9082:80
+  #   env_file:
+  #     - pvpgn/.env
+  #   networks:
+  #     - internal
+  #     - proxy
 
   ghostpp:
     restart: unless-stopped
@@ -58,6 +68,23 @@ services:
     depends_on:
       - ghostpp-db
     image: fatorin/ghostpp:1.3
+    environment:
+      - BNET_USERNAME=${BNET_USERNAME}
+      - BNET_PASSWORD=${BNET_PASSWORD}
+      - BNET_ROOTADMIN=${BNET_ROOTADMIN}
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Creating ghost.cfg from template...' &&
+      cp /app/config/default.cfg /app/config/ghost.cfg &&
+
+      echo 'Injecting Coolify variables...' &&
+      sed -i \"s/bnet_username =.*/bnet_username = \$BNET_USERNAME/\" /app/config/ghost.cfg &&
+      sed -i \"s/bnet_password =.*/bnet_password = \$BNET_PASSWORD/\" /app/config/ghost.cfg &&
+      sed -i \"s/bnet_rootadmin =.*/bnet_rootadmin = \$BNET_ROOTADMIN/\" /app/config/ghost.cfg &&
+
+      echo 'Starting Ghost++...' &&
+      ./ghost++ \"./config/ghost.cfg\"
+      "
     ports:
       - 6320:6320
       - 6321:6321
@@ -74,6 +101,8 @@ services:
     image: ender25/pvpgn-server:mysql-db
     volumes:
       - ./ghostpp/database:/var/lib/mysql
+      - ./ghostpp/db-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./ghostpp/db-populate.sql:/docker-entrypoint-initdb.d/2-populate.sql
     environment:
       MYSQL_DATABASE: "ghost"
       MYSQL_USER: "ghost"
@@ -82,37 +111,40 @@ services:
     networks:
       - internal
 
-  dota-stats:
-    restart: unless-stopped
-    container_name: dota_stats_server
-    depends_on:
-      - ghostpp-db
-    image: ender25/pvpgn-server:web-server
-    volumes:
-      - ./dota-stats:/var/www/html
-    ports:
-      - 9081:80
-    env_file:
-      - ghostpp/.env
-    networks:
-      - internal
-      - proxy
+  # dota-stats:
+  #   restart: unless-stopped
+  #   container_name: dota_stats_server
+  #   depends_on:
+  #     - ghostpp-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./dota-stats:/var/www/html
+  #   ports:
+  #     - 9081:80
+  #   env_file:
+  #     - ghostpp/.env
+  #   networks:
+  #     - internal
+  #     - proxy
 
-  phpmyadmin:
-    restart: unless-stopped
-    container_name: pvpgn_database_admin
-    depends_on:
-      - ghostpp-db
-    image: phpmyadmin/phpmyadmin
-    ports:
-      - 127.0.0.1:8085:80
-    environment:
-      PMA_HOSTS: "pvpgn-db,ghostpp-db"
-    networks:
-      - internal
+  # phpmyadmin:
+  #   restart: unless-stopped
+  #   container_name: pvpgn_database_admin
+  #   depends_on:
+  #     - ghostpp-db
+  #   image: phpmyadmin/phpmyadmin
+  #   ports:
+  #     - 127.0.0.1:8085:80
+  #   environment:
+  #     PMA_HOSTS: "pvpgn-db,ghostpp-db"
+  #   networks:
+  #     - internal
 
 networks:
   internal:
+    driver: bridge
   proxy:
-    external: true
+    name: proxy
+    driver: bridge
+#    external: true
 

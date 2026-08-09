@@ -36,7 +36,7 @@ services:
     ports:
       - 127.0.0.1:3306:3306
     volumes:
-      - ./pvpgn/database:/var/lib/mysql
+      - pvpgn-db-data:/var/lib/mysql
     environment:
       MYSQL_DATABASE: "bnetd"
       MYSQL_USER: "bnetd"
@@ -147,4 +147,7 @@ networks:
     name: proxy
     driver: bridge
 #    external: true
+
+volumes:
+  pvpgn-db-data:
 

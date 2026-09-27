@@ -19,12 +19,12 @@ services:
       "
     user: root
     ports:
-      - 6112:6112
-      - 6112:6112/udp
-      - 6200:6200
-      - 6200:6200/udp
-      - 4000:4000
-      - 4000:4000/udp
+      - 0.0.0.0:6112:6112
+      - 0.0.0.0:6112:6112/udp
+      - 0.0.0.0:6200:6200
+      - 0.0.0.0:6200:6200/udp
+      - 0.0.0.0:4000:4000
+      - 0.0.0.0:4000:4000/udp
     volumes:
       - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
       - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
@@ -64,7 +64,7 @@ services:
       - AURA_REALM1_SUDO_USERS=${AURA_REALM1_SUDO_USERS:-yes}
     stop_grace_period: 30s
     ports:
-      - 6320:6320
+      - 0.0.0.0:6320:6320
     volumes:
       - ./aura/data:/data
       - ./aura/config.ini:/data/config.ini:ro

@@ -1,16 +1,10 @@
 .idea
 .env
 pvpgn/.env
-ghostpp/.env
 pvpgn/var
 pvpgn/etc
 pvpgn/database
 pvpgn-stats/config.inc.php
-ghostpp/database
-ghostpp/config/ghost.cfg
-ghostpp/config/ghost.*.cfg
-ghostpp/config/blizzard.j
-ghostpp/config/common.j
 help_repos
 docker-compose.v*.yml
 aura/data/*

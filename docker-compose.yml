@@ -33,42 +33,6 @@ services:
     networks:
       - internal
 
-  pvpgn-linux:
-      restart: unless-stopped
-      container_name: pvpgn_linux_server
-      image: ender25/pvpgn-server:bnetd-mysql
-      user: root
-      network_mode: "host"
-      volumes:
-        - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
-        - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
-
-  d2cs:
-    restart: unless-stopped
-    container_name: d2cs_server
-    image: ender25/pvpgn-server:d2cs-mysql
-    ports:
-      - 6113:6113
-      - 6113:6113/udp
-    volumes:
-      - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
-      - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
-    networks:
-      - internal
-
-  d2dbs:
-    restart: unless-stopped
-    container_name: d2dbs_server
-    image: ender25/pvpgn-server:d2dbs-mysql
-    ports:
-      - 6114:6114
-      - 6114:6114/udp
-    volumes:
-      - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
-      - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
-    networks:
-      - internal
-
   pvpgn-db:
     restart: unless-stopped
     container_name: pvpgn_databse

@@ -28,7 +28,7 @@ services:
 
   pvpgn-db:
     restart: unless-stopped
-    container_name: pvpgn_databse
+    container_name: pvpgn-db
     image: ender25/pvpgn-server:mysql-db
     ports:
       - 127.0.0.1:3306:3306
@@ -50,7 +50,7 @@ services:
 
   aura:
     restart: unless-stopped
-    container_name: aura_server
+    container_name: aura
     depends_on:
       aura-init:
         condition: service_completed_successfully

@@ -1,4 +1,4 @@
-# 🕶 PVPGN PRO ➕ GHOST++ ➕ WEB STATS
+# 🕶 PVPGN PRO ➕ AURA BOT ➕ WEB STATS
 
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 [![GitHub Issues](https://img.shields.io/github/issues/acollazo25/pvpgn-ghost-docker.svg)](https://github.com/acollazo25/pvpgn-ghost-docker/issues)
@@ -7,7 +7,7 @@
 
 ## Deployment (WINDOWS / LINUX / MAC)
 
-> **ℹ️ NOTE:** The Ghost configuration is designed to work with the ***Warcraft 1.26x*** client, but you can adjust it to work with ***1.28x*** or higher. The default map is ***dota-6.83d-en.w3x***, but any other is possible.
+> **ℹ️ NOTE:** The game host bot is [Aura](https://github.com/jasjamjos/aura-bot) (image `jasjamjos/aura-bot`), built for the ***Warcraft 1.26a*** client only. Maps live in `aura/data/maps`.
 
 ### 🛠 Requirements
 1. [Docker](https://www.docker.com/products/docker-desktop)
@@ -37,15 +37,20 @@ docker run --rm -v %CD%/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs
 ```
 
 ### ⚙ Copy default config (*)
-1. Copy `pvpgn/.env.example` to `pvpgn/.env`.  Configure the `pvpgn/.env` for the [ssl termination](https://github.com/evertramos/nginx-proxy-automation) of the statistics website, otherwise you can ignore it and continue with the next step.
+1. Copy `.env.example` to `.env` and fill it in.
+```shell
+cp .env.example .env
+```
+```shell
+PUBLIC_IP=<your-public-ip>          # used for pvpgn address translation
+AURA_REALM1_USERNAME=binignet_aura  # bot account, auto-registered on first login
+AURA_REALM1_PASSWORD=<bot-password>
+AURA_REALM1_SUDO_USERS=yes          # root admins, comma-separated
+```
+2. Copy `pvpgn/.env.example` to `pvpgn/.env`.  Configure the `pvpgn/.env` for the [ssl termination](https://github.com/evertramos/nginx-proxy-automation) of the statistics website, otherwise you can ignore it and continue with the next step.
 > Even if SSL termination is not configured the `pvpgn/.env` file **must exist** in the root of the directory.
 ```shell
 cp pvpgn/.env.example pvpgn/.env
-```
-2. Copy `ghostpp/.env.example` to `ghostpp/.env`.  Configure the `ghostpp/.env` for the [ssl termination](https://github.com/evertramos/nginx-proxy-automation) of the statistics website, otherwise you can ignore it and continue with the next step.
-> Even if SSL termination is not configured the `ghostpp/.env` file **must exist** in the root of the directory.
-```shell
-cp ghostpp/.env.example ghostpp/.env
 ```
 ⚠ If SSL termination is not configured you must create a default proxy network.
 ```shell
@@ -62,75 +67,50 @@ storage_path = "sql:mode=mysql;host=pvpgn-db;name=bnetd;user=bnetd;pass=secret;d
 docker compose up -d pvpgn-db
 ```
 
-### 🚛 Create Ghost Database Schemas and run seeders (*)
-1. Seed database.
-```shell
-docker compose up -d ghostpp-db
-docker exec -i ghostpp_databse mysql -ughost -psecret ghost < ghostpp/db-schema.sql
-docker exec -i ghostpp_databse mysql -ughost -psecret ghost < ghostpp/db-populate.sql
-```
+### 🚩 Start pvpgn and aura services (*)
 
-### 🚩 Start pvpgn, d2cs, d2dbs and ghostpp services (*)
- 
+The aura container runs as uid 1000, so it must own its data folder.
 ```shell
-docker compose up -d pvpgn ghostpp
+sudo chown -R 1000:1000 aura/data
+docker compose up -d pvpgn aura
 ```
-
-### 🔀 Configure address translation for docker network (*)
-
-1. Get the IP assigned to your `ghostpp` service.
-```shell
-docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ghostpp_server
-```
-```shell
-'192.168.224.3'
-```
-- `92.168.128.3`: **ghostpp-service-ip**
-2. In the first line of the `pvpgn/etc/pvpgn/address_translation.conf` file add the following.
-```shell
-<ghostpp-service-ip>:6320 <your-public-ip>:6320 NONE ANY
-########################################################################################################
-#------------------------------------------------------------------------------------------------------#
-# Address Translation table                                                                            #
-#----------------------------------------------------------------------------
-#
-```
-3. Restart pvpgn service `docker compose restart pvpgn`
-
-### 🤖 Bot Account creation (*)
-
-1. Add the gateway to your battlenet servers `<your-public-ip>`.
-2. Open your Warcraft client, go to battlenet and create a bot account, example user `bot` password `secret`.
-3. Login and put any email.
-
-### ⚙️ Ghost Configuration (*)
-
-1. Copy the `ghostpp/config/default.cfg` to `ghostpp/config/ghost.cfg`.
-```shell
-cp ghostpp/config/default.cfg ghostpp/config/ghost.cfg
-```
-2. Edit the file `ghostpp/config/ghost.cfg` and set the following settings. This is enough to start.
-```shell
-bnet_username = bot
-bnet_password = secret
-```
-3. Restart ghost service `docker compose restart ghostpp`
+- pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to `pvpgn/etc/pvpgn/address_translation.conf` on every start, so players can join games hosted by aura.
+- The bot registers its account on first login. Check `docker compose logs aura` for `logged in as [binignet_aura]`.
+- Open TCP `6112` (pvpgn) and `6320` (aura games) in your firewall.
 
 ### 🎮 Invite friends and play (*)
 
-1. You and your friends can now add this battlenet server, create an account, and join the self-created game.
+1. Add the gateway to your battlenet servers `<your-public-ip>`.
+2. You and your friends can now create an account and ask the bot to host a game by whispering it:
+```shell
+/w binignet_aura !host dota lod, my game name
+```
 
 ### 👮‍♂️ Adding root admins
 
-1. Edit the file `ghostpp/config/ghost.cfg` and set the following settings.
-```shell
-bnet_rootadmin = yourAccount friendAccount otherFriend
-```
-2. Restart ghost service `docker compose restart ghostpp`
+1. Set `AURA_REALM1_SUDO_USERS` in `.env` (comma-separated pvpgn usernames).
+2. Recreate the bot `docker compose up -d aura`
+
+### 🗺 Adding maps
+
+1. Copy the `.w3x` file into `aura/data/maps`.
+2. Host it with `!host <part of map name>, <game name>`. Aura generates its map config in `aura/data/mapcfgs` on first use.
 
 ### 🕹 Commands (*)
 
-1. To see the list of available commands visit [Ghost++ Commands](https://wiki.eurobattle.net/index.php/Ghost++:Commands)
+1. To see the list of available commands visit [Aura Commands](https://github.com/jasjamjos/aura-bot/blob/master/COMMANDS.md)
+
+### 🔁 Migrating from Ghost++
+
+Ghost++ and its MySQL database (`ghostpp-db`) and dota-stats were removed; aura stores its data in SQLite at `aura/data/aura.db`. Old ghost stats, bans and admins are not migrated.
+1. [Optional] Archive old ghost data before switching:
+```shell
+docker exec ghostpp_databse mysqldump -ughost -psecret ghost > ghost-backup.sql
+```
+2. Pull and recreate, removing old containers:
+```shell
+docker compose up -d --remove-orphans
+```
 
 ### 📊 [Optional] Setup Pvpgn Stats (*)
 1. Copy `pvpgn-stats/config.inc.example.php` to `pvpgn-stats/config.inc.php`.
@@ -157,34 +137,14 @@ docker exec -i pvpgn_databse mysql -ubnetd -psecret bnetd < pvpgn-stats/migratio
 ```
 5. Open in browser [Pvpgn Stats](🌐 http://127.0.0.1:9082/)
 
-### 📊 [Optional] Setup Dota OpenStats (*)
-1. Up service.
-```shell
-docker compose up -d dota-stats
-```
-2. Set stats page. Edit the file `pvpgn/etc/pvpgn/anongame_infos.conf` and set the following settings.
-```shell
-server_URL = http://<your-public-ip>:9081/
-```
-or
-```
-# SSL Configured
-server_URL = https://dota-stats-domain.com
-```
-3. Restart pvpgn server
-```shell
-docker compose restart pvpgn
-```
-4. Open in browser [Pvpgn Stats](🌐 http://127.0.0.1:9081/)
-
 ### 📄 View Logs (*)
 #### Pvpgn Logs
 ```shell
 docker compose logs -f --tail 200 pvpgn
 ```
-#### Ghost++ Logs
+#### Aura Logs
 ```shell
-docker compose logs -f --tail 200 ghostpp
+docker compose logs -f --tail 200 aura
 ```
 
 ### ✉️ Contact
@@ -194,5 +154,4 @@ docker compose logs -f --tail 200 ghostpp
 -   [🙌 Pvpgn Official Page](https://pvpgn.pro/)
 -   [🙌 Pvpgn Stable Repo](https://github.com/pvpgn/pvpgn-server)
 -   [🙌 Pvpgn Docker Repo](https://github.com/wwmoraes/pvpgn-server-docker)
--   [🙌 Ghost++ Stable Repo](https://github.com/uakfdotb/ghostpp)
--   [🙌 Ghost++ Docker Repo](https://github.com/Fatorin/ghostpp_docker)
+-   [🙌 Aura Repo](https://github.com/jasjamjos/aura-bot)

@@ -77,8 +77,8 @@ services:
     restart: unless-stopped
     container_name: aura_server
     depends_on:
-      - aura-init:
-          condition: service_completed_successfully
+      aura-init:
+        condition: service_completed_successfully
     image: jasjamjos/aura-bot:13.6.4-bn.1
     environment:
       - AURA_REALM1_USERNAME=${AURA_REALM1_USERNAME}

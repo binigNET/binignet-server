@@ -49,26 +49,36 @@ services:
     networks:
       - internal
 
-  pvpgn-stats:
-    restart: unless-stopped
-    container_name: pvppg_stats_server
-    depends_on:
-      - pvpgn-db
-    image: ender25/pvpgn-server:web-server
+  # pvpgn-stats:
+  #   restart: unless-stopped
+  #   container_name: pvppg_stats_server
+  #   depends_on:
+  #     - pvpgn-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./pvpgn-stats:/var/www/html
+  #     - ./pvpgn/var/pvpgn/ladders:/ladders
+  #   ports:
+  #     - 9082:80
+  #   env_file:
+  #     - pvpgn/.env
+  #   networks:
+  #     - internal
+  #     - proxy
+  aura-init:
+    image: jasjamjos/aura-bot:13.6.4-bn.1
+    user: "0:0"
+    entrypoint: ["chown", "-R", "1000:1000", "/data"]
     volumes:
-      - ./pvpgn-stats:/var/www/html
-      - ./pvpgn/var/pvpgn/ladders:/ladders
-    ports:
-      - 9082:80
-    env_file:
-      - pvpgn/.env
-    networks:
-      - internal
-      - proxy
+      - ./aura/data:/data
+    restart: "no"
 
   aura:
     restart: unless-stopped
     container_name: aura_server
+    depends_on:
+      - aura-init:
+          condition: service_completed_successfully
     image: jasjamjos/aura-bot:13.6.4-bn.1
     environment:
       - AURA_REALM1_USERNAME=${AURA_REALM1_USERNAME}
@@ -104,6 +114,7 @@ services:
 
 networks:
   internal:
+    driver: bridge
   proxy:
-    external: true
-
+    name: proxy
+    driver: bridge

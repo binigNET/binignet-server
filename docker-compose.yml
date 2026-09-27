@@ -20,11 +20,8 @@ services:
     user: root
     ports:
       - 0.0.0.0:6112:6112
-      - 0.0.0.0:6112:6112/udp
       - 0.0.0.0:6200:6200
-      - 0.0.0.0:6200:6200/udp
       - 0.0.0.0:4000:4000
-      - 0.0.0.0:4000:4000/udp
     volumes:
       - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
       - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn

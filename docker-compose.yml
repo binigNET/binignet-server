@@ -43,22 +43,6 @@ services:
       MYSQL_PASSWORD: "secret" # this is not a risk
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
 
-  # pvpgn-stats:
-  #   restart: unless-stopped
-  #   container_name: pvppg_stats_server
-  #   depends_on:
-  #     - pvpgn-db
-  #   image: ender25/pvpgn-server:web-server
-  #   volumes:
-  #     - ./pvpgn-stats:/var/www/html
-  #     - ./pvpgn/var/pvpgn/ladders:/ladders
-  #   ports:
-  #     - 9082:80
-  #   env_file:
-  #     - pvpgn/.env
-  #   networks:
-  #     - internal
-  #     - proxy
   aura-init:
     image: jasjamjos/aura-bot:13.6.4-bn.1
     user: "0:0"

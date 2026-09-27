@@ -13,3 +13,6 @@ ghostpp/config/blizzard.j
 ghostpp/config/common.j
 help_repos
 docker-compose.v*.yml
+aura/data/*
+!aura/data/maps/
+!aura/data/mapcfgs/

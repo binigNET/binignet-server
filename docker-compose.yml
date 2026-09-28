@@ -4,22 +4,19 @@ services:
   pvpgn:
     restart: unless-stopped
     container_name: pvpgn_server
-    image: ender25/pvpgn-server:bnetd-mysql
+    build: ./src/pvpgn
+    image: binignet/pvpgn:local
+    platform: linux/amd64
     depends_on:
-      - pvpgn-db
-      - aura
+      pvpgn-db:
+        condition: service_healthy
+      aura:
+        condition: service_started
     environment:
       - PUBLIC_IP=${PUBLIC_IP}
-    # map aura's docker IP to the public IP so players can join hosted games
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Configuring Address Translation...' &&
-      AURA_IP=\$$(getent hosts aura | awk '{ print \$$1 }') &&
-      echo \"\$$AURA_IP:6320 \$$PUBLIC_IP:6320 NONE ANY\" > /usr/local/etc/pvpgn/address_translation.conf &&
-      echo 'Starting PvPGN...' &&
-      /usr/local/sbin/bnetd -f
-      "
-    user: root
+      - DB_NAME=${DB_NAME:-bnetd}
+      - DB_USER=${DB_USER:-bnetd}
+      - DB_PASS=${DB_PASS:-secret}
     ports:
       - 6112:6112
       - 6112:6112/udp
@@ -28,8 +25,7 @@ services:
       - 4000:4000
       - 4000:4000/udp
     volumes:
-      - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
-      - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
+      - pvpgn-var:/usr/local/var/pvpgn
     networks:
       - internal
 
@@ -42,10 +38,15 @@ services:
     volumes:
       - ./pvpgn/database:/var/lib/mysql
     environment:
-      MYSQL_DATABASE: "bnetd"
-      MYSQL_USER: "bnetd"
-      MYSQL_PASSWORD: "secret" # this is not a risk
+      MYSQL_DATABASE: ${DB_NAME:-bnetd}
+      MYSQL_USER: ${DB_USER:-bnetd}
+      MYSQL_PASSWORD: ${DB_PASS:-secret}
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     networks:
       - internal
 
@@ -111,6 +112,9 @@ services:
       PMA_HOSTS: "pvpgn-db"
     networks:
       - internal
+
+volumes:
+  pvpgn-var:
 
 networks:
   internal:

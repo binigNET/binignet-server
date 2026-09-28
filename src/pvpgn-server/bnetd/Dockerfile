@@ -71,7 +71,7 @@ WORKDIR /usr/local/sbin
 EXPOSE 6112 \
        6112/udp \
        6200 \
-       6200/udp
+       6200/udp \
        4000 \
        4000/udp
 

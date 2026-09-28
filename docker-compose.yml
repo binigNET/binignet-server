@@ -1,3 +1,5 @@
+version: "3.7"
+
 services:
   pvpgn:
     restart: unless-stopped
@@ -19,12 +21,17 @@ services:
       "
     user: root
     ports:
-      - 0.0.0.0:6112:6112
-      - 0.0.0.0:6200:6200
-      - 0.0.0.0:4000:4000
+      - 6112:6112
+      - 6112:6112/udp
+      - 6200:6200
+      - 6200:6200/udp
+      - 4000:4000
+      - 4000:4000/udp
     volumes:
       - ./pvpgn/etc/pvpgn:/usr/local/etc/pvpgn
       - ./pvpgn/var/pvpgn:/usr/local/var/pvpgn
+    networks:
+      - internal
 
   pvpgn-db:
     restart: unless-stopped
@@ -39,7 +46,25 @@ services:
       MYSQL_USER: "bnetd"
       MYSQL_PASSWORD: "secret" # this is not a risk
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    networks:
+      - internal
 
+  # pvpgn-stats:
+  #   restart: unless-stopped
+  #   container_name: pvppg_stats_server
+  #   depends_on:
+  #     - pvpgn-db
+  #   image: ender25/pvpgn-server:web-server
+  #   volumes:
+  #     - ./pvpgn-stats:/var/www/html
+  #     - ./pvpgn/var/pvpgn/ladders:/ladders
+  #   ports:
+  #     - 9082:80
+  #   env_file:
+  #     - pvpgn/.env
+  #   networks:
+  #     - internal
+  #     - proxy
   aura-init:
     image: jasjamjos/aura-bot:13.6.4-bn.1
     user: "0:0"
@@ -61,11 +86,13 @@ services:
       - AURA_REALM1_SUDO_USERS=${AURA_REALM1_SUDO_USERS:-yes}
     stop_grace_period: 30s
     ports:
-      - 0.0.0.0:6320:6320
+      - 6320:6320
     volumes:
       - ./aura/data:/data
       - ./aura/config.ini:/data/config.ini:ro
     command: ["--no-lan"]
+    networks:
+      - internal
     logging:
       driver: json-file
       options:
@@ -82,4 +109,12 @@ services:
       - 127.0.0.1:8085:80
     environment:
       PMA_HOSTS: "pvpgn-db"
+    networks:
+      - internal
 
+networks:
+  internal:
+    driver: bridge
+  proxy:
+    name: proxy
+    driver: bridge

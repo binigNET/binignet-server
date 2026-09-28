@@ -20,22 +20,6 @@ git clone https://github.com/acollazo25/pvpgn-ghost-docker.git
 cd pvpgn-ghost-docker
 ```
 
-### 📦 Export pvpgn data (LINUX / MAC)
-
-```shell
-mkdir "pvpgn"
-docker run --rm -v $PWD/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
-docker run --rm -v $PWD/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
-```
-
-### 📦 Export pvpgn data (WINDOWS)
-
-```shell
-mkdir "pvpgn"
-docker run --rm -v %CD%/pvpgn/var:/tmp/var ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/var/pvpgn /tmp/var
-docker run --rm -v %CD%/pvpgn/etc:/tmp/etc ender25/pvpgn-server:bnetd-d2cs-d2dbs-mysql cp -r /usr/local/etc/pvpgn /tmp/etc
-```
-
 ### ⚙ Copy default config (*)
 1. Copy `.env.example` to `.env` and fill it in.
 ```shell
@@ -46,6 +30,10 @@ PUBLIC_IP=<your-public-ip>          # used for pvpgn address translation
 AURA_REALM1_USERNAME=binignet_aura  # bot account, auto-registered on first login
 AURA_REALM1_PASSWORD=<bot-password>
 AURA_REALM1_SUDO_USERS=yes          # root admins, comma-separated
+# optional, shared by pvpgn + pvpgn-db (defaults shown)
+# DB_NAME=bnetd
+# DB_USER=bnetd
+# DB_PASS=secret
 ```
 2. Copy `pvpgn/.env.example` to `pvpgn/.env`.  Configure the `pvpgn/.env` for the [ssl termination](https://github.com/evertramos/nginx-proxy-automation) of the statistics website, otherwise you can ignore it and continue with the next step.
 > Even if SSL termination is not configured the `pvpgn/.env` file **must exist** in the root of the directory.
@@ -57,24 +45,15 @@ cp pvpgn/.env.example pvpgn/.env
 docker network create proxy
 ```
 
-### 🚚 Setup Pvpgn Database (*)
-1. Edit the file `pvpgn/etc/pvpgn/bnetd.conf` and set the following settings.
-```shell
-storage_path = "sql:mode=mysql;host=pvpgn-db;name=bnetd;user=bnetd;pass=secret;default=0;prefix=pvpgn_"
-```
-1. Up pvpgn database.
-```shell
-docker compose up -d pvpgn-db
-```
-
 ### 🚩 Start pvpgn and aura services (*)
 
 The aura container runs as uid 1000, so it must own its data folder.
 ```shell
 sudo chown -R 1000:1000 aura/data
-docker compose up -d pvpgn aura
+docker compose up -d --build pvpgn-db aura pvpgn
 ```
-- pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to `pvpgn/etc/pvpgn/address_translation.conf` on every start, so players can join games hosted by aura.
+- pvpgn is built from `src/pvpgn` with its config baked in; no host config files needed. It waits for `pvpgn-db` to be healthy and stores accounts in MySQL. Logs, ladders and mail live in the `pvpgn-var` volume.
+- On every start pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to its address translation, so players can join games hosted by aura. It exits if `PUBLIC_IP` is unset or `aura` can't be resolved. If aura is recreated alone (new IP), run `docker compose restart pvpgn`.
 - The bot registers its account on first login. Check `docker compose logs aura` for `logged in as [binignet_aura]`.
 - Open TCP `6112` (pvpgn) and `6320` (aura games) in your firewall.
 
@@ -95,6 +74,15 @@ docker compose up -d pvpgn aura
 
 1. Copy the `.w3x` file into `aura/data/maps`.
 2. Host it with `!host <part of map name>, <game name>`. Aura generates its map config in `aura/data/mapcfgs` on first use.
+
+### 🔧 Customizing pvpgn config
+
+Defaults come from the base image (`ender25/pvpgn-server:bnetd-mysql`). To change a file (motd, channels, news...), put your version in `src/pvpgn/conf/` (same path as under `/usr/local/etc/pvpgn`) and rebuild:
+```shell
+docker compose up -d --build pvpgn
+```
+To see the defaults: `docker run --rm --entrypoint cat ender25/pvpgn-server:bnetd-mysql /usr/local/etc/pvpgn/<file>`.
+`bnetd.conf` keeps `@DB_*@` placeholders in `storage_path`, filled from `.env` at start.
 
 ### 🕹 Commands (*)
 

@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   pvpgn:
     restart: unless-stopped
@@ -22,17 +20,22 @@ services:
       - 6112:6112/udp
       - 6200:6200
       - 6200:6200/udp
-      - 4000:4000
-      - 4000:4000/udp
     volumes:
-      - pvpgn-var:/usr/local/var/pvpgn
+      - pvpgn-ladders:/usr/local/var/pvpgn/ladders
+      - pvpgn-mail:/usr/local/var/pvpgn/bnmail
+      - pvpgn-reports:/usr/local/var/pvpgn/reports
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6112'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     networks:
       - internal
 
   pvpgn-db:
     restart: unless-stopped
     container_name: pvpgn-db
-    image: ender25/pvpgn-server:mysql-db
+    image: ender25/pvpgn-server:mysql-db@sha256:60057a7a630f7f8b60c03982910b9fd484779f11d909bc15539b29f78a2d05e7
     ports:
       - 127.0.0.1:3306:3306
     volumes:
@@ -58,14 +61,13 @@ services:
   #   image: ender25/pvpgn-server:web-server
   #   volumes:
   #     - ./pvpgn-stats:/var/www/html
-  #     - ./pvpgn/var/pvpgn/ladders:/ladders
+  #     - pvpgn-ladders:/ladders
   #   ports:
   #     - 9082:80
   #   env_file:
   #     - pvpgn/.env
   #   networks:
   #     - internal
-  #     - proxy
   aura-init:
     image: jasjamjos/aura-bot:13.6.4-bn.1
     user: "0:0"
@@ -93,7 +95,9 @@ services:
       - ./aura/config.ini:/data/config.ini:ro
     command: ["--no-lan"]
     networks:
-      - internal
+      internal:
+        # fixed so pvpgn address translation survives aura recreate
+        ipv4_address: 172.28.0.10
     logging:
       driver: json-file
       options:
@@ -105,7 +109,7 @@ services:
     container_name: pvpgn_database_admin
     depends_on:
       - pvpgn-db
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest@sha256:42a200db07b4e70fbf32c594ad4521cf16399b8e54bbb5adceae98e7566dfbeb
     ports:
       - 127.0.0.1:8085:80
     environment:
@@ -114,11 +118,13 @@ services:
       - internal
 
 volumes:
-  pvpgn-var:
+  pvpgn-ladders:
+  pvpgn-mail:
+  pvpgn-reports:
 
 networks:
   internal:
     driver: bridge
-  proxy:
-    name: proxy
-    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24

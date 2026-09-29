@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import Flash from '$lib/Flash.svelte';
 	import { ago } from '$lib/format';
 	import { button, input } from '$lib/styles';
@@ -29,7 +30,7 @@
 		<tbody>
 			{#each data.users as u (u.name)}
 				<tr class="border-t border-zinc-800">
-					<td class="py-2">{u.name}</td>
+					<td class="py-2"><a href="/players/{encodeURIComponent(u.name)}" class="hover:underline">{u.name}</a></td>
 					<td>{u.clienttag}</td>
 					<td>{u.version || '—'}</td>
 					<td>{u.country}</td>
@@ -39,6 +40,14 @@
 		</tbody>
 	</table>
 {/if}
+
+<section class="mt-10">
+	<h2 class="mb-2 font-medium">Edit player</h2>
+	<form onsubmit={(e) => { e.preventDefault(); const n = new FormData(e.currentTarget).get('name'); if (n) goto(`/players/${encodeURIComponent(String(n))}`); }} class="flex gap-2">
+		<input name="name" required placeholder="Username" class="{input} w-44" />
+		<button class={button}>Open</button>
+	</form>
+</section>
 
 <section class="mt-10">
 	<h2 class="mb-2 font-medium">Create player</h2>

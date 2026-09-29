@@ -1,8 +1,8 @@
 # 🕶 PVPGN PRO ➕ AURA BOT ➕ WEB STATS
 
 ![Status](https://img.shields.io/badge/status-active-success.svg)
-[![GitHub Issues](https://img.shields.io/github/issues/acollazo25/pvpgn-ghost-docker.svg)](https://github.com/acollazo25/pvpgn-ghost-docker/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/wwmoraes/pvpgn-server-docker.svg)](https://github.com/acollazo25/pvpgn-ghost-docker/pulls)
+[![GitHub Issues](https://img.shields.io/github/issues/binigNET/binignet-server.svg)](https://github.com/binigNET/binignet-server/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/binigNET/binignet-server.svg)](https://github.com/binigNET/binignet-server/pulls)
 ---
 
 ## Deployment (WINDOWS / LINUX / MAC)
@@ -13,11 +13,13 @@
 1. [Docker](https://www.docker.com/products/docker-desktop)
 2. [Docker Compose](https://docs.docker.com/compose/install/)
 
+> **ℹ️ NOTE:** pvpgn is amd64 only (`platform: linux/amd64`). On arm hosts (Apple Silicon, arm VPS) it runs emulated and slower.
+
 ### ⬇️ Clone repo (*)
 
 ```shell
-git clone https://github.com/acollazo25/pvpgn-ghost-docker.git
-cd pvpgn-ghost-docker
+git clone https://github.com/binigNET/binignet-server.git
+cd binignet-server
 ```
 
 ### ⚙ Copy default config (*)
@@ -35,27 +37,17 @@ AURA_REALM1_SUDO_USERS=yes          # root admins, comma-separated
 # DB_USER=bnetd
 # DB_PASS=secret
 ```
-2. Copy `pvpgn/.env.example` to `pvpgn/.env`.  Configure the `pvpgn/.env` for the [ssl termination](https://github.com/evertramos/nginx-proxy-automation) of the statistics website, otherwise you can ignore it and continue with the next step.
-> Even if SSL termination is not configured the `pvpgn/.env` file **must exist** in the root of the directory.
-```shell
-cp pvpgn/.env.example pvpgn/.env
-```
-⚠ If SSL termination is not configured you must create a default proxy network.
-```shell
-docker network create proxy
-```
 
 ### 🚩 Start pvpgn and aura services (*)
 
-The aura container runs as uid 1000, so it must own its data folder.
 ```shell
-sudo chown -R 1000:1000 aura/data
 docker compose up -d --build pvpgn-db aura pvpgn
 ```
-- pvpgn is built from `src/pvpgn` with its config baked in; no host config files needed. It waits for `pvpgn-db` to be healthy and stores accounts in MySQL. Logs, ladders and mail live in the `pvpgn-var` volume.
-- On every start pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to its address translation, so players can join games hosted by aura. It exits if `PUBLIC_IP` is unset or `aura` can't be resolved. If aura is recreated alone (new IP), run `docker compose restart pvpgn`.
+- pvpgn is built from `src/pvpgn` with its config baked in; no host config files needed. It waits for `pvpgn-db` to be healthy and stores accounts in MySQL. Ladders, mail and reports live in the `pvpgn-ladders`, `pvpgn-mail` and `pvpgn-reports` volumes; logs go to `docker compose logs pvpgn`.
+- On every start pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to its address translation, so players can join games hosted by aura. It exits if `PUBLIC_IP` is unset or `aura` can't be resolved. aura has a fixed IP (`172.28.0.10`), so recreating it alone needs no pvpgn restart.
+- `aura-init` makes aura (uid 1000) own `aura/data`; no manual `chown` needed.
 - The bot registers its account on first login. Check `docker compose logs aura` for `logged in as [binignet_aura]`.
-- Open TCP `6112` (pvpgn) and `6320` (aura games) in your firewall.
+- Open `6112` TCP+UDP (pvpgn), `6200` TCP+UDP (pvpgn WC3 routing) and `6320` TCP (aura games) in your firewall.
 
 ### 🎮 Invite friends and play (*)
 
@@ -114,14 +106,14 @@ $homepage = "https://stats-domain.com/";
 $ladderroot = "https://stats-domain.com/"; # include last /
 ...
 ```
-3. Up pvpgn stats.
+3. Uncomment the `pvpgn-stats` service in `docker-compose.yml`, create the env file it reads (`touch pvpgn/.env`, or fill it for [ssl termination](https://github.com/evertramos/nginx-proxy-automation)) and start it.
 ```shell
 docker compose up -d pvpgn-stats
 ```
 4. Run Seeders.
 ```shell
-docker exec -i pvpgn_databse mysql -ubnetd -psecret bnetd < pvpgn-stats/migrations/d2ladder.sql
-docker exec -i pvpgn_databse mysql -ubnetd -psecret bnetd < pvpgn-stats/migrations/stats.sql
+docker exec -i pvpgn-db mysql -ubnetd -psecret bnetd < pvpgn-stats/migrations/d2ladder.sql
+docker exec -i pvpgn-db mysql -ubnetd -psecret bnetd < pvpgn-stats/migrations/stats.sql
 ```
 5. Open in browser [Pvpgn Stats](🌐 http://127.0.0.1:9082/)
 
@@ -135,8 +127,20 @@ docker compose logs -f --tail 200 pvpgn
 docker compose logs -f --tail 200 aura
 ```
 
+### 💾 Backup / restore
+Accounts live in MySQL (`pvpgn-db`, data in `./pvpgn/database`); ladders, mail and reports in named volumes. Use your `DB_*` values.
+```shell
+# backup
+docker exec pvpgn-db mysqldump -ubnetd -psecret bnetd > bnetd-$(date +%F).sql
+docker run --rm -v binignet-server_pvpgn-ladders:/v -v "$PWD":/b alpine tar czf /b/pvpgn-ladders.tgz -C /v .
+# restore
+docker exec -i pvpgn-db mysql -ubnetd -psecret bnetd < bnetd-<date>.sql
+docker run --rm -v binignet-server_pvpgn-ladders:/v -v "$PWD":/b alpine tar xzf /b/pvpgn-ladders.tgz -C /v
+```
+Repeat the volume commands for `pvpgn-mail` / `pvpgn-reports`. Volume names are prefixed with the compose project (dir name); check with `docker volume ls`.
+
 ### ✉️ Contact
-[Creating an issue](https://github.com/acollazo25/pvpgn-ghost-docker/issues)
+[Creating an issue](https://github.com/binigNET/binignet-server/issues)
 
 ### 🎉 Acknowledgements
 -   [🙌 Pvpgn Official Page](https://pvpgn.pro/)

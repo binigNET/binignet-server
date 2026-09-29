@@ -8,8 +8,12 @@ type State = 'disconnected' | 'connecting' | 'ready';
 type Collector = { lines: string[]; touch: () => void };
 type WhisperListener = (from: string, msg: string) => void;
 
-// bnetd quota: 5 lines / 5s
-const SEND_GAP_MS = 1200;
+// bnetd flood quota (bnetd.conf): quota_lines = 5 per quota_time = 5s, and a line
+// counts once per quota_wrapline (40) chars. Stay a line under it, with margin.
+const QUOTA_WINDOW_MS = 5500;
+const QUOTA_LINES = 4;
+const WRAP = 40;
+export const MAX_CMD_LEN = WRAP * QUOTA_LINES;
 const WHISPER_RE = /^<from (\S+)> (.*)$/;
 
 const unescape = (s: string) => s.replace(/\\(["\\])/g, '$1');
@@ -22,7 +26,7 @@ class PvpgnTelnet {
 	private collector: Collector | null = null;
 	private whisperListeners = new Set<WhisperListener>();
 	private queue: Promise<unknown> = Promise.resolve();
-	private lastSend = 0;
+	private sent: { at: number; lines: number }[] = [];
 	private backoff = 2000;
 	private ready: Promise<void> | null = null;
 
@@ -98,16 +102,21 @@ class PvpgnTelnet {
 	/** Run a slash command; returns reply lines (collected until quiet). Serialized + rate limited. */
 	run(cmd: string, { quietMs = 600, maxMs = 4000 } = {}): Promise<string[]> {
 		if (/[\r\n]/.test(cmd)) return Promise.reject(new Error('newline in command'));
+		if (cmd.length > MAX_CMD_LEN) return Promise.reject(new Error(`command longer than ${MAX_CMD_LEN} chars`));
 		const job = this.queue.then(async () => {
 			await this.connect();
-			const wait = this.lastSend + SEND_GAP_MS - Date.now();
-			if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+			await this.throttle(Math.max(1, Math.ceil(cmd.length / WRAP)));
 			return new Promise<string[]>((resolve) => {
 				let quiet: NodeJS.Timeout;
 				const done = () => {
 					clearTimeout(quiet);
 					clearTimeout(max);
 					this.collector = null;
+					// replies without CRLF (e.g. /alert's message-box packet)
+					if (this.buf) {
+						c.lines.push(unescape(this.buf));
+						this.buf = '';
+					}
 					resolve(c.lines);
 				};
 				const c: Collector = {
@@ -120,12 +129,22 @@ class PvpgnTelnet {
 				const max = setTimeout(done, maxMs);
 				c.touch();
 				this.collector = c;
-				this.lastSend = Date.now();
 				this.sock!.write(cmd + '\r\n');
 			});
 		});
 		this.queue = job.catch(() => {});
 		return job;
+	}
+
+	private async throttle(lines: number) {
+		for (;;) {
+			const now = Date.now();
+			this.sent = this.sent.filter((s) => now - s.at < QUOTA_WINDOW_MS);
+			const used = this.sent.reduce((n, s) => n + s.lines, 0);
+			if (used + lines <= QUOTA_LINES || !this.sent.length) break;
+			await new Promise((r) => setTimeout(r, this.sent[0].at + QUOTA_WINDOW_MS - now));
+		}
+		this.sent.push({ at: Date.now(), lines });
 	}
 
 	/** Whisper aura and collect its whispered replies. */

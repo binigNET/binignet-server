@@ -1,3 +1,5 @@
+import { fields, respond } from '$lib/server/actions';
+import { addAccount } from '$lib/server/pvpgn/commands';
 import { accountCount } from '$lib/server/pvpgn/db';
 import { config } from '$lib/server/env';
 import { readStatus } from '$lib/server/pvpgn/status';
@@ -16,4 +18,11 @@ export const load = async () => {
 				game: u.gameid ? (gameNames.get(u.gameid) ?? `#${u.gameid}`) : null
 			}))
 	};
+};
+
+export const actions = {
+	create: async ({ request }) => {
+		const f = await fields(request);
+		return respond('create', await addAccount(f.str('user'), f.str('password')));
+	}
 };

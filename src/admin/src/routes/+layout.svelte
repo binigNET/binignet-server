@@ -14,6 +14,7 @@
 			<a href="/players" class="hover:text-zinc-100">Players</a>
 			<a href="/games" class="hover:text-zinc-100">Games</a>
 			<a href="/bans" class="hover:text-zinc-100">Bans</a>
+			<a href="/messages" class="hover:text-zinc-100">Messages</a>
 		</nav>
 		<form method="POST" action="/logout" class="ml-auto">
 			<button class="text-sm text-zinc-400 hover:text-zinc-100">Log out</button>

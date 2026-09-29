@@ -16,6 +16,11 @@ if [ -z "${PUBLIC_IP:-}" ]; then
   exit 1
 fi
 
+# ; splits storage_path keys, " breaks its quoting
+for v in "$DB_HOST" "$DB_NAME" "$DB_USER" "$DB_PASS" "$DB_PREFIX"; do
+  case "$v" in *\;*|*\"*) echo "ERROR: DB_* must not contain ; or \"" >&2; exit 1 ;; esac
+done
+
 # escape sed replacement specials: \ | &
 esc() { printf '%s' "$1" | sed -e 's/[\\|&]/\\&/g'; }
 

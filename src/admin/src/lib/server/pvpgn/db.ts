@@ -24,3 +24,9 @@ export async function ping(): Promise<boolean> {
 		return false;
 	}
 }
+
+export async function accountCount(): Promise<number> {
+	// uid 0 is the default-user template row
+	const [rows] = await db().query(`SELECT COUNT(*) AS n FROM ${table('BNET')} WHERE uid > 0`);
+	return Number((rows as { n: number }[])[0].n);
+}

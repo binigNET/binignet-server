@@ -11,6 +11,9 @@
 		<a href="/" class="font-semibold">binignet admin</a>
 		<nav class="flex gap-4 text-sm text-zinc-400">
 			<a href="/" class="hover:text-zinc-100">Overview</a>
+			<a href="/players" class="hover:text-zinc-100">Players</a>
+			<a href="/games" class="hover:text-zinc-100">Games</a>
+			<a href="/bans" class="hover:text-zinc-100">Bans</a>
 		</nav>
 		<form method="POST" action="/logout" class="ml-auto">
 			<button class="text-sm text-zinc-400 hover:text-zinc-100">Log out</button>

@@ -21,7 +21,7 @@ export const config = {
 		user: req('PVPGN_ADMIN_USER'),
 		pass: req('PVPGN_ADMIN_PASS')
 	}),
-	auraBot: () => env.AURA_BOT || 'binignet_aura',
+	auraBot: () => env.AURA_BOT || 'bot',
 	paths: {
 		pvpgnAdmin: env.PVPGN_ADMIN_DIR || '/data/pvpgn-admin',
 		pvpgnStatus: env.PVPGN_STATUS_DIR || '/data/pvpgn-status',

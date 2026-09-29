@@ -29,7 +29,7 @@ cp .env.example .env
 ```
 ```shell
 PUBLIC_IP=<your-public-ip>          # used for pvpgn address translation
-AURA_REALM1_USERNAME=binignet_aura  # bot account, auto-registered on first login
+AURA_REALM1_USERNAME=bot            # bot account, auto-registered on first login
 AURA_REALM1_PASSWORD=<bot-password>
 AURA_REALM1_SUDO_USERS=yes          # root admins, comma-separated
 # optional, shared by pvpgn + pvpgn-db (defaults shown)
@@ -46,7 +46,7 @@ docker compose up -d --build pvpgn-db aura pvpgn
 - pvpgn is built from `src/pvpgn` with its config baked in; no host config files needed. It waits for `pvpgn-db` to be healthy and stores accounts in MySQL. Ladders, mail and reports live in the `pvpgn-ladders`, `pvpgn-mail` and `pvpgn-reports` volumes; logs go to `docker compose logs pvpgn`.
 - On every start pvpgn writes `<aura-ip>:6320 <PUBLIC_IP>:6320 NONE ANY` to its address translation, so players can join games hosted by aura. It exits if `PUBLIC_IP` is unset or `aura` can't be resolved. aura has a fixed IP (`172.28.0.10`), so recreating it alone needs no pvpgn restart.
 - `aura-init` makes aura (uid 1000) own `aura/data`; no manual `chown` needed.
-- The bot registers its account on first login. Check `docker compose logs aura` for `logged in as [binignet_aura]`.
+- The bot registers its account on first login. Check `docker compose logs aura` for `logged in as [bot]`.
 - Open `6112` TCP+UDP (pvpgn), `6200` TCP+UDP (pvpgn WC3 routing) and `6320` TCP (aura games) in your firewall.
 
 ### 🎮 Invite friends and play (*)
@@ -54,7 +54,7 @@ docker compose up -d --build pvpgn-db aura pvpgn
 1. Add the gateway to your battlenet servers `<your-public-ip>`.
 2. You and your friends can now create an account and ask the bot to host a game by whispering it:
 ```shell
-/w binignet_aura !host dota lod, my game name
+/w bot !host dota lod, my game name
 ```
 
 ### 👮‍♂️ Adding root admins

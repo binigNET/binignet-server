@@ -45,17 +45,20 @@ class PvpgnTelnet {
 			sock.on('data', (chunk: string) => {
 				this.buf += chunk;
 				if (!loggedIn) {
-					if (this.buf.endsWith('Username: ')) {
+					// check failure first: bnetd re-prompts "Username: " right after it
+					if (/Login failed|no bot access/.test(this.buf)) {
+						this.lastError = this.buf.includes('bot access')
+							? 'account has no bot access'
+							: `login failed: check ${user} exists and PVPGN_ADMIN_PASS`;
+						// wrong credentials won't fix themselves quickly; don't hammer bnetd
+						this.backoff = 60_000;
+						sock.destroy();
+					} else if (this.buf.endsWith('Username: ')) {
 						this.buf = '';
 						sock.write(user + '\r\n');
 					} else if (this.buf.endsWith('Password: ')) {
 						this.buf = '';
 						sock.write(pass + '\r\n');
-					} else if (/Login failed|no bot access/.test(this.buf)) {
-						this.lastError = this.buf.includes('bot access')
-							? 'account has no bot access'
-							: 'login failed';
-						sock.destroy();
 					} else if (!welcomed && this.buf.includes('Your unique name:')) {
 						welcomed = true;
 						// let the welcome text arrive, then drop it

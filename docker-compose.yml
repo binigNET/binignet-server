@@ -24,6 +24,9 @@ services:
       - pvpgn-ladders:/usr/local/var/pvpgn/ladders
       - pvpgn-mail:/usr/local/var/pvpgn/bnmail
       - pvpgn-reports:/usr/local/var/pvpgn/reports
+      - pvpgn-status:/usr/local/var/pvpgn/status
+      # admin-editable files (bans, motd/news, banners, channels, icons), shared w/ admin
+      - ./pvpgn/admin:/usr/local/var/pvpgn/admin
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6112'"]
       interval: 10s
@@ -104,6 +107,50 @@ services:
         max-size: 10m
         max-file: "3"
 
+  admin:
+    restart: unless-stopped
+    container_name: binignet_admin
+    build: ./src/admin
+    image: binignet/admin:local
+    depends_on:
+      - pvpgn
+    environment:
+      - ORIGIN=https://${ADMIN_DOMAIN:-bnetadmin.bubuyogg.com}
+      - ADDRESS_HEADER=X-Forwarded-For
+      - XFF_DEPTH=1
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD not set}
+      - DB_NAME=${DB_NAME:-bnetd}
+      - DB_USER=${DB_USER:-bnetd}
+      - DB_PASS=${DB_PASS:-secret}
+      - PVPGN_ADMIN_USER=${PVPGN_ADMIN_USER:-binignet_admin}
+      - PVPGN_ADMIN_PASS=${PVPGN_ADMIN_PASS:?PVPGN_ADMIN_PASS not set}
+      - AURA_BOT=${AURA_REALM1_USERNAME}
+    volumes:
+      - ./pvpgn/admin:/data/pvpgn-admin
+      - pvpgn-status:/data/pvpgn-status:ro
+      - ./aura/data:/data/aura
+    networks:
+      - internal
+
+  caddy:
+    restart: unless-stopped
+    container_name: caddy
+    image: caddy:2@sha256:0c994536bddb66445885237f1a5dcc1916bccea922661c76b4e9fc24061f9b52
+    depends_on:
+      - admin
+    environment:
+      - ADMIN_DOMAIN=${ADMIN_DOMAIN:-bnetadmin.bubuyogg.com}
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+    volumes:
+      - ./src/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - internal
+
   phpmyadmin:
     restart: unless-stopped
     container_name: pvpgn_database_admin
@@ -121,6 +168,9 @@ volumes:
   pvpgn-ladders:
   pvpgn-mail:
   pvpgn-reports:
+  pvpgn-status:
+  caddy-data:
+  caddy-config:
 
 networks:
   internal:

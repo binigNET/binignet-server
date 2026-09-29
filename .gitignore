@@ -9,3 +9,5 @@ aura/data/*
 !aura/data/maps/
 !aura/data/mapcfgs/
 .DS_Store
+pvpgn/admin
+docker-compose.override.yml

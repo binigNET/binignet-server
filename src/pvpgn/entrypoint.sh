@@ -32,6 +32,17 @@ sed -e "s|@DB_HOST@|$(esc "$DB_HOST")|" \
     -e "s|@DB_PREFIX@|$(esc "$DB_PREFIX")|" \
     "$TMPL/bnetd.conf" > "$ETC/bnetd.conf"
 
+# admin-editable files (shared w/ dashboard): seed image defaults, never overwrite
+ADMIN=/usr/local/var/pvpgn/admin
+mkdir -p "$ADMIN/files"
+for f in bnban.conf channel.conf ad.json topics.json icons.conf; do
+  [ -e "$ADMIN/$f" ] || cp "$ETC/$f" "$ADMIN/$f"
+done
+cp -rn "$ETC/i18n" "$ADMIN/"
+cp -rn /usr/local/var/pvpgn/files/. "$ADMIN/files/"
+# dashboard runs as uid 1000
+chown -R 1000:1000 "$ADMIN"
+
 echo "Resolving ${AURA_HOST}..."
 AURA_IP=""
 i=0

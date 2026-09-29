@@ -76,6 +76,23 @@ docker compose up -d --build pvpgn
 To see the defaults: `docker run --rm --entrypoint cat ender25/pvpgn-server:bnetd-mysql /usr/local/etc/pvpgn/<file>`.
 `bnetd.conf` keeps `@DB_*@` placeholders in `storage_path`, filled from `.env` at start.
 
+Files the admin dashboard edits (bans, motd/news under `i18n/`, `ad.json` + `files/`, `channel.conf`, `topics.json`, `icons.conf`) live in `./pvpgn/admin` instead. They're seeded from the image on first start and never overwritten, so edit them there and apply live from the dashboard or with `/rehash <mode>`.
+
+### 🛡 Admin dashboard
+Web UI at `https://bnetadmin.bubuyogg.com` (`ADMIN_DOMAIN`), served by Caddy with automatic HTTPS. Login user `admin`.
+1. DNS: add an A record `bnetadmin` → VPS IP, **DNS only** (grey cloud) in Cloudflare. Open TCP `80`, `443` in the firewall.
+2. In `.env` set `ADMIN_PASSWORD` (`openssl rand -base64 24 | tr -d '/+=' | cut -c1-32`) and `PVPGN_ADMIN_PASS` (another random string). Add `binignet_admin` to `AURA_REALM1_SUDO_USERS`.
+3. Start pvpgn with the new config (`docker compose up -d --build pvpgn aura`), then create the dashboard's pvpgn account from your admin account in the game client:
+```
+/addacct binignet_admin <PVPGN_ADMIN_PASS>
+/set binignet_admin BNET\auth\botlogin true
+/set binignet_admin BNET\auth\command_groups 255
+/admin +binignet_admin
+```
+4. `docker compose up -d --build admin caddy`
+- The dashboard logs in to pvpgn over telnet (port 23, internal network only). Only one session per account, so don't log in as `binignet_admin` elsewhere.
+- Local dev: add a gitignored `docker-compose.override.yml` that publishes `admin` on `127.0.0.1:3000`, sets `ORIGIN=http://localhost:3000` and `ADDRESS_HEADER=`, and disables `caddy` (`profiles: [disabled]`). On macOS also move `pvpgn-db` to a named volume (the `./pvpgn/database` bind breaks MySQL table-name case).
+
 ### 🕹 Commands (*)
 
 1. To see the list of available commands visit [Aura Commands](https://github.com/jasjamjos/aura-bot/blob/master/COMMANDS.md)

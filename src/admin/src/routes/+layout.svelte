@@ -17,6 +17,7 @@
 			<a href="/messages" class="hover:text-zinc-100">Messages</a>
 			<a href="/maps" class="hover:text-zinc-100">Maps</a>
 			<a href="/banner" class="hover:text-zinc-100">Banner</a>
+			<a href="/logs" class="hover:text-zinc-100">Logs</a>
 		</nav>
 		<form method="POST" action="/logout" class="ml-auto">
 			<button class="text-sm text-zinc-400 hover:text-zinc-100">Log out</button>

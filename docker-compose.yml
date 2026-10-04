@@ -114,6 +114,7 @@ services:
     image: binignet/admin:local
     depends_on:
       - pvpgn
+      - docker-proxy
     environment:
       - ORIGIN=https://${ADMIN_DOMAIN:-bnetadmin.bubuyogg.com}
       - ADDRESS_HEADER=X-Forwarded-For
@@ -127,12 +128,26 @@ services:
       - PVPGN_ADMIN_USER=${PVPGN_ADMIN_USER:-binignet_admin}
       - PVPGN_ADMIN_PASS=${PVPGN_ADMIN_PASS:?PVPGN_ADMIN_PASS not set}
       - AURA_BOT=${AURA_REALM1_USERNAME}
+      - DOCKER_API=http://docker-proxy:2375
     volumes:
       - ./pvpgn/admin:/data/pvpgn-admin
       - pvpgn-status:/data/pvpgn-status:ro
       - ./aura/data:/data/aura
     networks:
       - internal
+      - dockerapi
+
+  # read-only docker API (GET /containers only) so admin can show aura's logs
+  docker-proxy:
+    restart: unless-stopped
+    container_name: docker-proxy
+    image: tecnativa/docker-socket-proxy@sha256:1f5038b54f06c3e18422902cf00ba21803d1c97805aae032e5e6673d532d3459
+    environment:
+      - CONTAINERS=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - dockerapi
 
   caddy:
     restart: unless-stopped
@@ -175,6 +190,9 @@ volumes:
   caddy-config:
 
 networks:
+  # admin <-> docker-proxy only, no outside access
+  dockerapi:
+    internal: true
   internal:
     driver: bridge
     ipam:

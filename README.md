@@ -90,6 +90,7 @@ Web UI at `https://bnetadmin.bubuyogg.com` (`ADMIN_DOMAIN`), served by Caddy wit
 /admin +binignet_admin
 ```
 4. `docker compose up -d --build admin caddy`
+- The Logs page reads aura's output through `docker-proxy`, a read-only Docker API proxy (GET on containers only) on a network shared with `admin` alone.
 - The dashboard logs in to pvpgn over telnet (port 23, internal network only). Only one session per account, so don't log in as `binignet_admin` elsewhere.
 - Local dev: add a gitignored `docker-compose.override.yml` that publishes `admin` on `127.0.0.1:3000`, sets `ORIGIN=http://localhost:3000` and `ADDRESS_HEADER=`, and disables `caddy` (`profiles: [disabled]`). On macOS also move `pvpgn-db` to a named volume (the `./pvpgn/database` bind breaks MySQL table-name case).
 

@@ -22,6 +22,7 @@ export const config = {
 		pass: req('PVPGN_ADMIN_PASS')
 	}),
 	auraBot: () => env.AURA_BOT || 'bot',
+	dockerApi: () => env.DOCKER_API || 'http://docker-proxy:2375',
 	paths: {
 		pvpgnAdmin: env.PVPGN_ADMIN_DIR || '/data/pvpgn-admin',
 		pvpgnStatus: env.PVPGN_STATUS_DIR || '/data/pvpgn-status',

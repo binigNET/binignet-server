@@ -90,6 +90,7 @@ services:
       - AURA_REALM1_USERNAME=${AURA_REALM1_USERNAME}
       - AURA_REALM1_PASSWORD=${AURA_REALM1_PASSWORD}
       - AURA_REALM1_SUDO_USERS=${AURA_REALM1_SUDO_USERS:-yes}
+      - AURA_REALM1_ADMINS=${AURA_REALM1_ADMINS:-${PVPGN_ADMIN_USER:-binignet_admin}}
     stop_grace_period: 30s
     ports:
       - 6320:6320

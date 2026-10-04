@@ -33,9 +33,9 @@ export function parseAuraGames(lines: string[]): AuraGame[] {
 	}));
 }
 
-/** Cached ~15s; one whisper in flight at a time. Throws if pvpgn/aura unreachable. */
-export async function auraGames(): Promise<AuraGame[]> {
-	if (cache && Date.now() - cache.at < TTL_MS) return cache.games;
+/** Cached ~15s (`fresh` skips the cache); one whisper in flight at a time. Throws if pvpgn/aura unreachable. */
+export async function auraGames({ fresh = false } = {}): Promise<AuraGame[]> {
+	if (!fresh && cache && Date.now() - cache.at < TTL_MS) return cache.games;
 	inflight ??= pvpgn
 		.askAura('!games')
 		.then((lines) => {
@@ -46,4 +46,32 @@ export async function auraGames(): Promise<AuraGame[]> {
 		})
 		.finally(() => (inflight = null));
 	return inflight;
+}
+
+export function invalidateAuraGames() {
+	cache = null;
+}
+
+/**
+ * Cancel an aura lobby. `!unhost` from a whisper can't name a game: it takes the most recent
+ * lobby, so only act when that lobby is unambiguously the one asked for (max_lobbies = 1).
+ * Needs the dashboard account in aura's realm admins (AURA_REALM1_ADMINS) for others' lobbies.
+ */
+export async function unhostLobby(id: number): Promise<{ ok: boolean; message: string }> {
+	if (pvpgn.state !== 'ready') return { ok: false, message: 'pvpgn offline' };
+	let games: AuraGame[];
+	try {
+		games = await auraGames({ fresh: true });
+	} catch (e) {
+		return { ok: false, message: `can't reach aura: ${(e as Error).message}` };
+	}
+	const target = games.find((g) => g.id === id);
+	if (!target) return { ok: false, message: 'lobby gone' };
+	if (!target.lobby) return { ok: false, message: 'lobby already started' };
+	if (games.filter((g) => g.lobby).length > 1) return { ok: false, message: 'multiple lobbies open — unhost in-game' };
+
+	const replies = await pvpgn.askAura('!unhost');
+	invalidateAuraGames();
+	if (replies.some((r) => r.startsWith('Aborting '))) return { ok: true, message: `Unhosted "${target.name}".` };
+	return { ok: false, message: replies.join('\n') || "aura didn't confirm — the game may be starting" };
 }

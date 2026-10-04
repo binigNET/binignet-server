@@ -1,4 +1,5 @@
-import { auraGames, type AuraGame } from '$lib/server/aura/games';
+import { respond } from '$lib/server/actions';
+import { auraGames, unhostLobby, type AuraGame } from '$lib/server/aura/games';
 import { readStatus } from '$lib/server/pvpgn/status';
 
 export const load = async () => {
@@ -21,4 +22,11 @@ export const load = async () => {
 			...pvpgnGames.filter((g) => !aura.some((a) => a.name === g.name)).map((g) => ({ aura: null, pvpgn: g }))
 		]
 	};
+};
+
+export const actions = {
+	unhost: async ({ request }) => {
+		const id = Number((await request.formData()).get('id'));
+		return respond('unhost', await unhostLobby(id));
+	}
 };

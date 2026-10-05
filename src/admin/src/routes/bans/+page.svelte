@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import DurationReason from '$lib/DurationReason.svelte';
 	import Flash from '$lib/Flash.svelte';
 	import { until } from '$lib/format';
 	import { button, input, small } from '$lib/styles';
@@ -47,9 +48,7 @@
 		<h2 class="mb-2 font-medium">{title}</h2>
 		<form method="POST" action="?/{name}" use:enhance class="mb-3 flex flex-wrap gap-2">
 			<input name="user" required placeholder="Account" class="{input} w-40" />
-			<input name="hours" type="number" min="0" value="0" title="hours, 0 = permanent" class="{input} w-24" />
-			<span class="self-center text-xs text-zinc-400">h (0 = permanent)</span>
-			<input name="reason" placeholder="Reason" class="{input} flex-1" />
+			<DurationReason />
 			<button class={button}>{verb}</button>
 		</form>
 		<Flash {form} {name} />

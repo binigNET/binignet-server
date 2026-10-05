@@ -55,7 +55,8 @@
 				<tr class="border-t border-zinc-800">
 					<td class="py-2">
 						<span class="mr-2 inline-block size-2 rounded-full {p.bot ? (p.online ? 'bg-orange-400' : 'ring-1 ring-orange-400') : p.online ? 'bg-emerald-400' : ''}"></span>
-						<a href="/players/{encodeURIComponent(p.name)}" class="hover:underline {p.online ? '' : 'text-zinc-300'}">{p.name}</a>
+						<a href="/players/{encodeURIComponent(p.name)}" class="hover:underline {p.deleted ? 'text-zinc-500 line-through' : p.online ? '' : 'text-zinc-300'}">{p.name}</a>
+						{#if p.deleted}<span class="ml-2 rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">deleted</span>{/if}
 					</td>
 					<td>{p.clienttag ?? '—'}</td>
 					<td>{p.game ?? '—'}</td>

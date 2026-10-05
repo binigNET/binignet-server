@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
+	import DurationReason from '$lib/DurationReason.svelte';
 	import Flash from '$lib/Flash.svelte';
 	import { localDateTime, until } from '$lib/format';
 	import { findIcon, iconSrc, RACES } from '$lib/icons';
@@ -23,6 +24,17 @@
 	// viewer's timezone → client-side only
 	const when = (x: Date | null) => (!x ? '—' : mounted ? localDateTime(x) : '');
 	const raceLabel = { humans: 'Human', orcs: 'Orc', nightelves: 'Night Elf', undead: 'Undead', random: 'Random' };
+	let newPass = $state('');
+	function genPass() {
+		const abc = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+		newPass = Array.from(crypto.getRandomValues(new Uint32Array(10)), (n) => abc[n % abc.length]).join('');
+	}
+	const KICK_BANS = [
+		[0, 'No ban'],
+		[10, '+ IP ban 10 min'],
+		[60, '+ IP ban 1 h'],
+		[1440, '+ IP ban 1 day']
+	] as const;
 	const profile = $derived(
 		(
 			[
@@ -41,6 +53,9 @@
 	{#if saved}<img src={iconSrc(saved.code)} alt={saved.name} title={saved.name} class="h-8 rounded-sm" />{/if}
 	{p.username}
 	<span class="rounded bg-amber-400/15 px-2 py-0.5 text-sm font-medium text-amber-300">Lv {level}</span>
+	{#if data.deleted}
+		<span class="rounded bg-red-500/15 px-2 py-0.5 text-sm font-medium text-red-300">Deleted</span>
+	{/if}
 	{#if data.online}
 		<span class="rounded bg-emerald-500/15 px-2 py-0.5 text-sm font-medium text-emerald-300">Online</span>
 	{:else}
@@ -96,7 +111,7 @@
 	</div>
 </section>
 
-<form method="POST" use:enhance={() => { saving = true; return async ({ update }) => { await update({ reset: false }); saving = false; }; }}>
+<form method="POST" action="?/save" use:enhance={() => { saving = true; return async ({ update }) => { await update({ reset: false }); saving = false; }; }}>
 	<h2 class="mb-2 flex items-center gap-3 font-medium">
 		WC3 TFT ladder
 		<button
@@ -161,3 +176,62 @@
 	<button class={button} disabled={saving}>{saving ? 'Saving… (pvpgn rate limit, ~1s per change)' : 'Save changes'}</button>
 	<Flash {form} name="player" />
 </form>
+
+<section class="mt-10 max-w-3xl space-y-6">
+	<h2 class="font-medium">Actions</h2>
+
+	{#if data.online}
+		<form method="POST" action="?/kick" use:enhance class="flex flex-wrap items-center gap-2">
+			<span class="w-20 text-sm text-zinc-400">Kick</span>
+			<select name="minutes" class="{input} w-40">
+				{#each KICK_BANS as [m, label]}<option value={m}>{label}</option>{/each}
+			</select>
+			<button class={button}>Kick</button>
+			<Flash {form} name="kick" />
+		</form>
+	{/if}
+
+	{#each [['lock', 'Lock', d.locked], ['mute', 'Mute', d.muted]] as const as [name, verb, active]}
+		<div>
+			{#if active}
+				<form method="POST" action="?/un{name}" use:enhance class="flex flex-wrap items-center gap-2">
+					<span class="w-20 text-sm text-zinc-400">{verb}</span>
+					<button class={button}>Un{name}</button>
+				</form>
+			{:else}
+				<form method="POST" action="?/{name}" use:enhance class="flex flex-wrap items-center gap-2">
+					<span class="w-20 text-sm text-zinc-400">{verb}</span>
+					<DurationReason />
+					<button class={button}>{verb}</button>
+				</form>
+			{/if}
+			<Flash {form} {name} />
+		</div>
+	{/each}
+
+	<div>
+		<form method="POST" action="?/chpass" use:enhance class="flex flex-wrap items-center gap-2">
+			<span class="w-20 text-sm text-zinc-400">Password</span>
+			<input name="password" bind:value={newPass} required minlength="3" placeholder="New password" autocomplete="new-password" class="{input} w-48 font-mono" />
+			<button type="button" class={small} onclick={genPass}>Generate</button>
+			<button class={button}>Set password</button>
+		</form>
+		<Flash {form} name="chpass" />
+	</div>
+
+	{#if !data.deleted}
+		<div>
+			<form
+				method="POST"
+				action="?/delete"
+				use:enhance={({ cancel }) => { if (!confirm(`Delete ${p.username}? Locks permanently and kicks; unlock to restore.`)) cancel(); }}
+				class="flex flex-wrap items-center gap-2"
+			>
+				<span class="w-20 text-sm text-zinc-400">Delete</span>
+				<button class="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500">Delete account</button>
+				<span class="text-xs text-zinc-400">Soft delete: permanent lock + kick. Unlock to restore.</span>
+			</form>
+			<Flash {form} name="delete" />
+		</div>
+	{/if}
+</section>

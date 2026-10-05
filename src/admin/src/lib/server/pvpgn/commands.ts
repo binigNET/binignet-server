@@ -107,12 +107,39 @@ export function unmute(user: string) {
 
 // --- accounts ---
 
+/** Replies echo the password and its hash: keep only the outcome lines. */
+function hidePass(r: Result): Result {
+	return { ...r, message: r.message.split('\n').filter((l) => !/Trying to|Hash is/.test(l)).join('\n') || r.message };
+}
+
 export function addAccount(user: string, pass: string) {
 	if (!validName(user)) return Promise.resolve(bad('invalid user name (1-15 chars, no spaces)'));
 	if (!/^\S{3,}$/.test(pass)) return Promise.resolve(bad('password: 3+ chars, no spaces'));
-	// reply echoes the password and its hash: keep only the outcome line
-	return exec(`/addacct ${user} ${pass}`, /Account \d+ created/, pass).then((r) => ({
-		...r,
-		message: r.message.split('\n').filter((l) => !/Trying to add|Hash is/.test(l)).join('\n') || r.message
-	}));
+	return exec(`/addacct ${user} ${pass}`, /Account \d+ created/, pass).then(hidePass);
+}
+
+export function chpass(user: string, pass: string) {
+	if (!validName(user)) return Promise.resolve(bad('invalid user name'));
+	if (!/^\S{3,}$/.test(pass)) return Promise.resolve(bad('password: 3+ chars, no spaces'));
+	return exec(`/chpass ${user} ${pass}`, /updated/, pass)
+		.then(hidePass)
+		.then((r) => (r.ok ? { ok: true, message: `Password for ${user} set to: ${pass}` } : r));
+}
+
+/** Disconnect. `banMinutes` > 0 also IP-bans; never sends 0 (= permanent IP ban). */
+export function kill(user: string, banMinutes: number | null) {
+	if (!validName(user)) return Promise.resolve(bad('invalid user name'));
+	const min = banMinutes && banMinutes > 0 ? ` ${Math.floor(banMinutes)}` : '';
+	return exec(`/kill ${user}${min}`, /Operation successful/);
+}
+
+// no delete command in pvpgn, and DB deletes get resurrected by bnetd's account cache
+export const DELETED_REASON = 'account deleted';
+
+/** Soft delete: permanent lock (lock doesn't disconnect), then kick if online. Unlock restores. */
+export async function softDelete(user: string): Promise<Result> {
+	const r = await lock(user, 0, DELETED_REASON);
+	if (!r.ok) return r;
+	const k = await kill(user, null);
+	return { ok: true, message: `Deleted ${user} (locked permanently${k.ok ? ', kicked' : ''}). Unlock to restore.` };
 }

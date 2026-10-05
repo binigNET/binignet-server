@@ -31,12 +31,16 @@ export async function accountCount(): Promise<number> {
 	return Number((rows as { n: number }[])[0].n);
 }
 
-export type Account = { username: string; lastLogin: Date | null };
+export type Account = { username: string; lastLogin: Date | null; locked: boolean; lockReason: string | null };
 
 export async function listAccounts(): Promise<Account[]> {
-	const [rows] = await db().query(`SELECT username, acct_lastlogin_time AS t FROM ${table('BNET')} WHERE uid > 0`);
-	return (rows as { username: string; t: string | number | null }[]).map((r) => ({
+	const [rows] = await db().query(
+		`SELECT username, acct_lastlogin_time AS t, auth_lock AS locked, auth_lockreason AS reason FROM ${table('BNET')} WHERE uid > 0`
+	);
+	return (rows as { username: string; t: string | number | null; locked: string | null; reason: string | null }[]).map((r) => ({
 		username: r.username,
-		lastLogin: Number(r.t) > 0 ? new Date(Number(r.t) * 1000) : null
+		lastLogin: Number(r.t) > 0 ? new Date(Number(r.t) * 1000) : null,
+		locked: r.locked === 'true',
+		lockReason: r.reason || null
 	}));
 }

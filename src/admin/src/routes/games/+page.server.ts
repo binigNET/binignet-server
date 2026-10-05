@@ -1,9 +1,9 @@
-import { respond } from '$lib/server/actions';
-import { auraGames, unhostLobby, type AuraGame } from '$lib/server/aura/games';
+import { fields, respond } from '$lib/server/actions';
+import { auraGames, giveOwner, hostable, hostGame, unhostLobby, type AuraGame } from '$lib/server/aura/games';
 import { readStatus } from '$lib/server/pvpgn/status';
 
-export const load = async () => {
-	const status = await readStatus();
+export const load = async ({ url }) => {
+	const [status, maps] = await Promise.all([readStatus(), hostable()]);
 	let aura: AuraGame[] = [];
 	let auraError = '';
 	try {
@@ -14,6 +14,8 @@ export const load = async () => {
 	const players = (id: number) => (status?.users ?? []).filter((u) => u.gameid === id).map((u) => u.name);
 	const pvpgnGames = (status?.games ?? []).map((g) => ({ ...g, players: players(g.id) }));
 	return {
+		hostable: maps,
+		prefillMap: url.searchParams.get('map') ?? '',
 		updatedAt: status?.updatedAt ?? null,
 		auraError,
 		// aura games w/ matching pvpgn listing (by name), then games not hosted by aura
@@ -28,5 +30,10 @@ export const actions = {
 	unhost: async ({ request }) => {
 		const id = Number((await request.formData()).get('id'));
 		return respond('unhost', await unhostLobby(id));
-	}
+	},
+	host: async ({ request }) => {
+		const f = await fields(request);
+		return respond('host', await hostGame({ map: f.str('map'), name: f.str('name'), priv: f.str('visibility') === 'private' }));
+	},
+	owner: async ({ request }) => respond('owner', await giveOwner((await fields(request)).str('user')))
 };

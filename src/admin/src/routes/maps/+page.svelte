@@ -41,6 +41,7 @@
 				<td class="py-2 whitespace-nowrap">{new Date(m.mtime).toLocaleDateString()}</td>
 				<td class="py-2 text-right whitespace-nowrap">
 					{#if editing !== m.name}
+						{#if !m.name.includes(',')}<a href="/games?map={encodeURIComponent(m.name)}" class={small}>Host</a>{/if}
 						<button class={small} onclick={() => (editing = m.name)}>Rename</button>
 						<form method="POST" action="?/delete" class="inline" use:enhance={({ cancel }) => { if (!confirm(`Delete ${m.name}?`)) cancel(); }}>
 							<input type="hidden" name="name" value={m.name} /><button class="{small} text-red-400">Delete</button>

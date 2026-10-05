@@ -1,22 +1,100 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
 	import Flash from '$lib/Flash.svelte';
+	import { localDateTime, until } from '$lib/format';
 	import { findIcon, iconSrc, RACES } from '$lib/icons';
 	import { button, input, small } from '$lib/styles';
 
 	let { data, form } = $props();
 	let saving = $state(false);
+	let mounted = $state(false);
+	onMount(() => (mounted = true));
 	const p = $derived(data.player);
-	// writable deriveds: reset to saved values after each load
-	// derived objects aren't deep-reactive: reassign, don't mutate
+	// writable deriveds reset to saved values after each load; not deep-reactive, so reassign, don't mutate
 	let stats = $derived({ ...p.stats });
 	let icon = $derived(p.icon);
 	let tab = $derived(RACES.find((r) => r.icons.some((i) => i.code === p.icon))?.key ?? 'H');
 	const current = $derived(findIcon(icon));
+	const saved = $derived(findIcon(p.icon));
+	const d = $derived(p.details);
+	// highest of solo/team/ffa, like pvpgn's statstring
+	const level = $derived(Math.max(...data.ladders.map((l) => p.stats[`${l}_level`])));
+	// viewer's timezone → client-side only
+	const when = (x: Date | null) => (!x ? '—' : mounted ? localDateTime(x) : '');
+	const raceLabel = { humans: 'Human', orcs: 'Orc', nightelves: 'Night Elf', undead: 'Undead', random: 'Random' };
+	const profile = $derived(
+		(
+			[
+				['Sex', d.profile.sex],
+				['Age', d.profile.age],
+				['Location', d.profile.location],
+				['Clan', d.profile.clan],
+				['Description', d.profile.description]
+			] as const
+		).filter(([, v]) => v)
+	);
 </script>
 
 <a href="/players" class="text-sm text-zinc-400 hover:text-zinc-100">← Players</a>
-<h1 class="mt-2 mb-4 text-xl font-semibold">{p.username} <span class="text-sm font-normal text-zinc-400">uid {p.uid}</span></h1>
+<h1 class="mt-2 mb-4 flex flex-wrap items-center gap-3 text-xl font-semibold">
+	{#if saved}<img src={iconSrc(saved.code)} alt={saved.name} title={saved.name} class="h-8 rounded-sm" />{/if}
+	{p.username}
+	<span class="rounded bg-amber-400/15 px-2 py-0.5 text-sm font-medium text-amber-300">Lv {level}</span>
+	{#if data.online}
+		<span class="rounded bg-emerald-500/15 px-2 py-0.5 text-sm font-medium text-emerald-300">Online</span>
+	{:else}
+		<span class="rounded bg-zinc-700/50 px-2 py-0.5 text-sm font-medium text-zinc-400">Offline</span>
+	{/if}
+	<span class="text-sm font-normal text-zinc-400">uid {p.uid}</span>
+</h1>
+
+<section class="mb-8 grid max-w-3xl gap-x-8 gap-y-6 rounded border border-zinc-800 p-4 text-sm sm:grid-cols-2">
+	<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+		<dt class="text-zinc-400">Email</dt>
+		<dd>{d.email ?? '—'}{#if d.email}<span class="ml-2 text-xs {d.emailVerified ? 'text-emerald-400' : 'text-zinc-500'}">{d.emailVerified ? 'verified' : 'unverified'}</span>{/if}</dd>
+		<dt class="text-zinc-400">Created</dt>
+		<dd>{when(d.created)}</dd>
+		<dt class="text-zinc-400">Last login</dt>
+		<dd>{when(d.lastLogin)}{#if d.lastClient}<span class="ml-2 text-zinc-500">{d.lastClient}</span>{/if}</dd>
+		<dt class="text-zinc-400">Last IP</dt>
+		<dd class="font-mono text-xs leading-5">{d.lastIp ?? '—'}</dd>
+		<dt class="text-zinc-400">Last owner</dt>
+		<dd>{d.lastOwner ?? '—'}</dd>
+		{#if data.online}
+			<dt class="text-zinc-400">Country</dt>
+			<dd>{data.online.country ?? '—'}</dd>
+			<dt class="text-zinc-400">Client</dt>
+			<dd>{data.online.clienttag} <span class="text-zinc-500">{data.online.version}</span></dd>
+			<dt class="text-zinc-400">In game</dt>
+			<dd>{data.online.game ?? '—'}</dd>
+		{/if}
+	</dl>
+	<div class="space-y-4">
+		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+			<dt class="text-zinc-400">Roles</dt>
+			<dd>{[d.admin && 'admin', d.operator && 'operator'].filter(Boolean).join(', ') || '—'}</dd>
+			<dt class="text-zinc-400">Cmd groups</dt>
+			<dd>{d.commandGroups ?? '—'}</dd>
+			<dt class="text-zinc-400">Locked</dt>
+			<dd class={d.locked ? 'text-red-400' : ''}>{d.locked ? `until ${until(d.lockUntil)}${d.lockReason ? ` — ${d.lockReason}` : ''}` : 'no'}</dd>
+			<dt class="text-zinc-400">Muted</dt>
+			<dd class={d.muted ? 'text-red-400' : ''}>{d.muted ? `until ${until(d.muteUntil)}${d.muteReason ? ` — ${d.muteReason}` : ''}` : 'no'}</dd>
+			{#each profile as [k, v]}
+				<dt class="text-zinc-400">{k}</dt>
+				<dd class="break-words">{v}</dd>
+			{/each}
+		</dl>
+		<table class="text-xs">
+			<thead class="text-zinc-400"><tr><th class="pr-4 text-left">Race</th><th class="pr-3 text-right">W</th><th class="text-right">L</th></tr></thead>
+			<tbody>
+				{#each Object.entries(d.races) as [k, v]}
+					<tr><td class="pr-4">{raceLabel[k as keyof typeof raceLabel]}</td><td class="pr-3 text-right">{v.wins}</td><td class="text-right">{v.losses}</td></tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+</section>
 
 <form method="POST" use:enhance={() => { saving = true; return async ({ update }) => { await update({ reset: false }); saving = false; }; }}>
 	<h2 class="mb-2 flex items-center gap-3 font-medium">

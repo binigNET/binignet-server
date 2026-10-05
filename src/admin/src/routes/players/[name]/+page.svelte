@@ -8,6 +8,7 @@
 	let saving = $state(false);
 	const p = $derived(data.player);
 	// writable deriveds: reset to saved values after each load
+	// derived objects aren't deep-reactive: reassign, don't mutate
 	let stats = $derived({ ...p.stats });
 	let icon = $derived(p.icon);
 	let tab = $derived(RACES.find((r) => r.icons.some((i) => i.code === p.icon))?.key ?? 'H');
@@ -24,7 +25,7 @@
 			type="button"
 			class={small}
 			title="Fill inputs only; review then Save"
-			onclick={() => { for (const l of data.ladders) for (const f of data.fields) stats[`${l}_${f}`] = data.max[f]; }}
+			onclick={() => (stats = Object.fromEntries(data.ladders.flatMap((l) => data.fields.map((f) => [`${l}_${f}`, data.max[f]]))) as typeof stats)}
 		>Max all</button>
 	</h2>
 	<table class="mb-6 text-sm">

@@ -8,6 +8,10 @@ export const FIELDS = ['level', 'xp', 'wins', 'losses'] as const;
 export type Stats = Record<`${(typeof LADDERS)[number]}_${(typeof FIELDS)[number]}`, number>;
 export type Player = { uid: number; username: string; stats: Stats; icon: string };
 
+// "Max all" preset. Level 65 = bnxplevel.conf cap (holds if xp >= 29500; pvpgn recomputes level from xp after games).
+// Profile packet sends wins/losses/xp as 16 bits, so wins <= 32767 to stay safe if read signed.
+export const MAX_STATS = { level: 65, xp: 30000, wins: 32767, losses: 0 } satisfies Record<(typeof FIELDS)[number], number>;
+
 const COLS = LADDERS.flatMap((l) => FIELDS.map((f) => `${l}_${f}` as keyof Stats));
 
 export async function getPlayer(name: string): Promise<Player | null> {

@@ -8,6 +8,7 @@
 	let saving = $state(false);
 	const p = $derived(data.player);
 	// writable deriveds: reset to saved values after each load
+	let stats = $derived({ ...p.stats });
 	let icon = $derived(p.icon);
 	let tab = $derived(RACES.find((r) => r.icons.some((i) => i.code === p.icon))?.key ?? 'H');
 	const current = $derived(findIcon(icon));
@@ -17,7 +18,15 @@
 <h1 class="mt-2 mb-4 text-xl font-semibold">{p.username} <span class="text-sm font-normal text-zinc-400">uid {p.uid}</span></h1>
 
 <form method="POST" use:enhance={() => { saving = true; return async ({ update }) => { await update({ reset: false }); saving = false; }; }}>
-	<h2 class="mb-2 font-medium">WC3 TFT ladder</h2>
+	<h2 class="mb-2 flex items-center gap-3 font-medium">
+		WC3 TFT ladder
+		<button
+			type="button"
+			class={small}
+			title="Fill inputs only; review then Save"
+			onclick={() => { for (const l of data.ladders) for (const f of data.fields) stats[`${l}_${f}`] = data.max[f]; }}
+		>Max all</button>
+	</h2>
 	<table class="mb-6 text-sm">
 		<thead class="text-zinc-400">
 			<tr><th class="pr-4 text-left"></th>{#each data.fields as f}<th class="px-1 text-left capitalize">{f}</th>{/each}</tr>
@@ -28,7 +37,7 @@
 					<td class="pr-4 py-1 capitalize">{l}</td>
 					{#each data.fields as f}
 						<td class="px-1 py-1">
-							<input type="number" min="0" name="{l}_{f}" value={p.stats[`${l}_${f}`]} class="{input} w-24 py-1" />
+							<input type="number" min="0" name="{l}_{f}" bind:value={stats[`${l}_${f}`]} class="{input} w-24 py-1" />
 						</td>
 					{/each}
 				</tr>

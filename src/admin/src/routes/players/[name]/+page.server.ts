@@ -1,13 +1,13 @@
 import { error } from '@sveltejs/kit';
 import { respond } from '$lib/server/actions';
-import { FIELDS, LADDERS, getPlayer, updatePlayer, type Stats } from '$lib/server/pvpgn/ladder';
+import { FIELDS, LADDERS, MAX_STATS, getPlayer, updatePlayer, type Stats } from '$lib/server/pvpgn/ladder';
 import { syncAccounts } from '$lib/server/pvpgn/sync';
 
 export const load = async ({ params }) => {
 	await syncAccounts(true);
 	const player = await getPlayer(params.name);
 	if (!player) error(404, `No account named ${params.name}`);
-	return { player, ladders: LADDERS, fields: FIELDS };
+	return { player, ladders: LADDERS, fields: FIELDS, max: MAX_STATS };
 };
 
 export const actions = {

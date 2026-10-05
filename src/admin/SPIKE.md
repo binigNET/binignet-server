@@ -38,7 +38,7 @@ Local, 2026-09-29, OrbStack amd64 emulated, pvpgn 1.99.7.2.1, aura 13.6.4-bn.1. 
 ## Ladder stats
 - Per-user keys `Record\W3XP\{solo,team,ffa}_{level,xp,wins,losses}` (= `pvpgn_Record.W3XP_*` cols). Apply live, `/stats` reflects immediately.
 - **AT**: team-based table `pvpgn_arrangedteam` (`teamid size member1..4 wins losses xp level rank`), not per-user; no `/set` key. **Open decision.**
-- Icon: `Record\W3XP\userselected_icon` settable via `/set` (e.g. `KBKW`); `iconstash` too. Codes in `icons.conf` `[icons]`: KBKB KBKD KBKE KBKM KBKP KBKW WCYB. Visual effect **client TBD**.
+- Icon: `Record\W3XP\userselected_icon` settable via `/set`, value `<tier><race>3W` (e.g. `2H3W` Rifleman; races H O N U R D), used verbatim in statstring, no win check. `/set … null` deletes → rank icon from `icons.conf` (`custom_icons = true`, keyed by solo_level). Set icon beats rank icon. Shows after rejoin channel / relog. With custom_icons on, client icon picks are ignored (pvpgn 1.99.7.2.1 `handle_anongame.cpp:575`).
 
 ## Status XML (`XML_status_output = true`)
 - File `statusdir/server.xml`, rewritten every `output_update_secs` (default 60).

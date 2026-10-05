@@ -1,14 +1,12 @@
 // Per-player WC3 ladder stats + icon. Read from MySQL (after /save), write via /set.
 // AT stats are per team (pvpgn_arrangedteam) and not editable here.
 import { db, table } from './db';
-import { files, readText } from './files';
 import { pvpgn } from './telnet';
 
 export const LADDERS = ['solo', 'team', 'ffa'] as const;
 export const FIELDS = ['level', 'xp', 'wins', 'losses'] as const;
 export type Stats = Record<`${(typeof LADDERS)[number]}_${(typeof FIELDS)[number]}`, number>;
 export type Player = { uid: number; username: string; stats: Stats; icon: string };
-export type Icon = { code: string; name: string };
 
 const COLS = LADDERS.flatMap((l) => FIELDS.map((f) => `${l}_${f}` as keyof Stats));
 
@@ -25,19 +23,8 @@ export async function getPlayer(name: string): Promise<Player | null> {
 		uid: Number(r.uid),
 		username: String(r.username),
 		stats: Object.fromEntries(COLS.map((c) => [c, Number(r[c]) || 0])) as Stats,
-		icon: r.icon ? String(r.icon) : ''
+		icon: r.icon && r.icon !== 'NULL' ? String(r.icon) : '' // pvpgn writes "NULL" for unset
 	};
-}
-
-/** Icons from icons.conf [icons] section: `<index> <name> <code>` */
-export async function iconChoices(): Promise<Icon[]> {
-	const text = await readText(files.icons()).catch(() => '');
-	const section = /\[icons\]([\s\S]*?)\[\/icons\]/.exec(text)?.[1] ?? '';
-	return section
-		.split(/\r?\n/)
-		.map((l) => l.replace(/#.*/, '').trim().split(/\s+/))
-		.filter((p) => p.length >= 3)
-		.map((p) => ({ name: p.slice(1, -1).join(' '), code: p[p.length - 1] }));
 }
 
 async function set(user: string, key: string, value: string) {

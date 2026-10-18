@@ -8,7 +8,8 @@
 	const base = $derived(`/${data.game}`);
 	const links = $derived([
 		[base, 'Server'],
-		[`${base}/bans`, 'Bans']
+		[`${base}/bans`, 'Bans'],
+		[`${base}/settings`, 'Settings']
 	] as const);
 	const s = $derived(data.server);
 </script>

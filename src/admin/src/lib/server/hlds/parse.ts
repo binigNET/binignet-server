@@ -64,3 +64,10 @@ export function parseBanList(out: string): Ban[] {
 	}
 	return bans;
 }
+
+/** `"name" is "value"` lines (one per queried cvar) → map */
+export function parseCvars(out: string): Record<string, string> {
+	const vals: Record<string, string> = {};
+	for (const m of out.matchAll(/^"([^"]+)" is "([^"]*)"/gm)) vals[m[1]] = m[2];
+	return vals;
+}

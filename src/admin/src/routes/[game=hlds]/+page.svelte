@@ -13,6 +13,7 @@
 	// $state, not $derived: autoRefresh reloads data and would reset the pick
 	let map = $state(untrack(() => data.server.info?.map ?? data.maps.cycle[0] ?? data.maps.other[0] ?? ''));
 	let custom = $state('');
+	const sk = $derived(data.botCfg.skill);
 </script>
 
 {#if info}
@@ -76,13 +77,26 @@
 				<button class="{small} text-red-400" disabled={!data.bots}>Kick all bots</button>
 			</form>
 			<form method="POST" action="?/readdbots" use:enhance>
-				<button class={small}>Re-add bots ({data.defaultBots})</button>
+				<button class={small}>Re-add bots ({data.botCfg.defaults.bots})</button>
 			</form>
 			<form method="POST" action="?/addbots" use:enhance={() => async ({ update }) => update({ reset: false })} class="flex gap-1">
 				<input name="n" type="number" min="1" max="31" value="1" class="{input} w-16 px-2 py-1 text-xs" />
 				<button class={small}>Add</button>
 			</form>
 		</div>
+		<form method="POST" action="?/botskill" use:enhance={() => async ({ update }) => update({ reset: false })} class="mt-3 flex items-center gap-1">
+			<input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" />
+			<button class={small}>Set skill</button>
+			<span class="text-xs text-zinc-400">{sk.hint}</span>
+		</form>
+		<details class="mt-3 text-sm">
+			<summary class="cursor-pointer text-zinc-400">Defaults (server start)</summary>
+			<form method="POST" action="?/savebots" use:enhance={() => async ({ update }) => update({ reset: false })} class="mt-2 flex flex-wrap items-center gap-2">
+				<label class="flex items-center gap-1 text-xs">Bots <input name="bots" type="number" min="0" max="31" value={data.botCfg.defaults.bots} class="{input} w-16 px-2 py-1 text-xs" /></label>
+				<label class="flex items-center gap-1 text-xs">Skill <input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" /></label>
+				<button class={small}>Save as default</button>
+			</form>
+		</details>
 		<Flash {form} name="bots" />
 	</section>
 </div>

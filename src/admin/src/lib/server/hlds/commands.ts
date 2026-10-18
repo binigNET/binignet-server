@@ -3,8 +3,9 @@
 import { readFile } from 'node:fs/promises';
 import type { GameId } from '$lib/games';
 import type { Result } from '../pvpgn/commands';
-import { GAME_DEFS, dataPath } from './games';
-import { parseBanList, parseMapcycle, parseMaps, parseStatus, type Ban, type Player } from './parse';
+import { getLine, readCfg, setLine, writeCfg } from './cfg';
+import { GAME_DEFS, dataPath, type Cvar } from './games';
+import { parseBanList, parseCvars, parseMapcycle, parseMaps, parseStatus, type Ban, type Player } from './parse';
 import { rcon } from './rcon';
 
 const MAP_RE = /^[\w.+-]{1,64}$/;
@@ -88,7 +89,7 @@ export async function addBots(game: GameId, n: number): Promise<Result> {
 export async function reAddBots(game: GameId): Promise<Result> {
 	const { bots, error } = await players(game);
 	if (error) return bad(error);
-	const target = GAME_DEFS[game].defaultBots;
+	const target = (await GAME_DEFS[game].bots.readDefaults()).bots;
 	if (bots >= target) return { ok: true, message: `Already ${bots} bots.` };
 	return exec(game, GAME_DEFS[game].addBots(bots, target), `Bots: ${bots} → ${target}.`);
 }
@@ -155,4 +156,90 @@ export function say(game: GameId, msg: string, mode: SayMode): Promise<Result> {
 	if (!m) return Promise.resolve(bad('empty message'));
 	if (!Object.hasOwn(SAY, mode)) return Promise.resolve(bad('invalid mode'));
 	return exec(game, [`${SAY[mode]} ${m}`], 'Sent.');
+}
+
+// --- bot settings ---
+
+export async function botSettings(game: GameId) {
+	const { skill } = GAME_DEFS[game].bots;
+	const defaults = await GAME_DEFS[game].bots.readDefaults();
+	return { defaults, skill: { min: skill.min, max: skill.max, hint: skill.hint } };
+}
+
+const inRange = (n: number, min: number, max: number) => Number.isInteger(n) && n >= min && n <= max;
+
+export function setBotSkill(game: GameId, n: number): Promise<Result> {
+	const { skill } = GAME_DEFS[game].bots;
+	if (!inRange(n, skill.min, skill.max)) return Promise.resolve(bad(`skill: ${skill.min}–${skill.max}`));
+	return exec(game, [skill.cvar(n)], `Bot skill set to ${n}.`);
+}
+
+export async function saveBotDefaults(game: GameId, bots: number, skill: number): Promise<Result> {
+	const b = GAME_DEFS[game].bots;
+	if (!inRange(bots, 0, MAX_BOTS)) return bad(`bots: 0–${MAX_BOTS}`);
+	if (!inRange(skill, b.skill.min, b.skill.max)) return bad(`skill: ${b.skill.min}–${b.skill.max}`);
+	try {
+		await b.saveDefaults(bots, skill);
+	} catch (e) {
+		return bad(`save failed: ${(e as Error).message}`);
+	}
+	return { ok: true, message: `Saved: ${bots} bots, skill ${skill} (used on server start).` };
+}
+
+// --- game settings (whitelisted cvars) ---
+
+function cvarDef(game: GameId, name: string): Cvar | undefined {
+	return GAME_DEFS[game].cvars.find((c) => c.name === name);
+}
+
+/** Normalised value, or null if invalid for the cvar. */
+function checkValue(c: Cvar, raw: string): string | null {
+	const v = raw.trim();
+	if (c.type === 'text') return /^[^"\\;\r\n\0]{0,32}$/.test(v) ? v : null;
+	if (c.type === 'bool') return v === '0' || v === '1' ? v : null;
+	const n = Number(v);
+	if (!v || !Number.isFinite(n) || n < c.type.min || n > c.type.max) return null;
+	if (!c.type.float && !Number.isInteger(n)) return null;
+	return String(n);
+}
+
+export async function cvars(game: GameId) {
+	const def = GAME_DEFS[game];
+	const saved = await readCfg(def.cvarFile());
+	let live: Record<string, string> = {};
+	let error = '';
+	try {
+		// one round trip: the server runs `a;b;c` and replies with every line
+		live = parseCvars(await rcon(game).run(def.cvars.map((c) => c.name).join(';')));
+	} catch (e) {
+		error = (e as Error).message;
+	}
+	return {
+		error,
+		cvars: def.cvars.map((c) => ({ ...c, live: live[c.name] ?? null, saved: getLine(saved, c.name) }))
+	};
+}
+
+export function setCvar(game: GameId, name: string, raw: string): Promise<Result> {
+	const c = cvarDef(game, name);
+	if (!c) return Promise.resolve(bad('unknown setting'));
+	const v = checkValue(c, raw);
+	if (v === null) return Promise.resolve(bad(`invalid value for ${c.label}`));
+	return exec(game, [`${name} "${v}"`], `${c.label} = ${v || '(empty)'}`);
+}
+
+/** Write to the server cfg (persists) and apply now. */
+export async function saveCvar(game: GameId, name: string, raw: string): Promise<Result> {
+	const c = cvarDef(game, name);
+	if (!c) return bad('unknown setting');
+	const v = checkValue(c, raw);
+	if (v === null) return bad(`invalid value for ${c.label}`);
+	const file = GAME_DEFS[game].cvarFile();
+	try {
+		await writeCfg(file, setLine(await readCfg(file), name, v));
+	} catch (e) {
+		return bad(`save failed: ${(e as Error).message}`);
+	}
+	const r = await setCvar(game, name, v);
+	return r.ok ? { ok: true, message: `${r.message} (saved)` } : { ok: false, message: `saved, but apply failed: ${r.message}` };
 }

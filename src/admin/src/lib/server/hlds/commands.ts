@@ -1,6 +1,6 @@
 // RCON actions per game server. Most commands print nothing on success, so a
 // command counts as done unless rcon itself fails.
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import type { GameId } from '$lib/games';
 import type { Result } from '../pvpgn/commands';
 import { getLine, readCfg, setLine, writeCfg } from './cfg';
@@ -46,7 +46,16 @@ const mapCache = new Map<GameId, { at: number; maps: string[] }>();
 async function serverMaps(game: GameId): Promise<string[]> {
 	const hit = mapCache.get(game);
 	if (hit && Date.now() - hit.at < 60_000) return hit.maps;
-	const maps = parseMaps(await rcon(game).run('maps *', { quietMs: 500 }));
+	// `maps *` can come back empty (seen on hldm), so merge in maps/*.bsp from the data mount
+	const [live, disk] = await Promise.all([
+		rcon(game)
+			.run('maps *', { quietMs: 500 })
+			.then(parseMaps)
+			.catch(() => [] as string[]),
+		readdir(dataPath(game, 'maps')).catch(() => [] as string[])
+	]);
+	const onDisk = disk.filter((f) => /\.bsp$/i.test(f)).map((f) => f.slice(0, -4));
+	const maps = [...new Set([...live, ...onDisk])].sort();
 	if (maps.length) mapCache.set(game, { at: Date.now(), maps });
 	return maps;
 }

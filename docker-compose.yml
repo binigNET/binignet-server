@@ -165,7 +165,9 @@ services:
     container_name: hldm
     image: artkirienko/rehlds@sha256:cfc2bcedd423d2c4d8da9d4ed046a9a8dfa55ce46c54372d1906949740ef45f2
     platform: linux/amd64
-    init: true
+    # like `docker run -it`: this old HLDS build freezes without a tty/stdin
+    tty: true
+    stdin_open: true
     stop_grace_period: 30s
     command:
       - "+map ${HLDM_DEFAULT_MAP:-crossfire}"

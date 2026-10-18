@@ -49,3 +49,18 @@ export function parseMapcycle(text: string): string[] {
 		.map((l) => l.replace(/\/\/.*/, '').trim().split(/\s+/)[0])
 		.filter(Boolean);
 }
+
+export type Ban = { id: string; expires: string };
+
+/** `listid` / `listip` → entries ("permanent" or "<n> min"). listip pads octets ("  9.  9..."). */
+export function parseBanList(out: string): Ban[] {
+	const bans: Ban[] = [];
+	for (const line of out.split('\n')) {
+		const m = /^(?:\d+\s+(\S+)|([\d.\s]+?))\s*:\s*(permanent|[\d.]+ min)/.exec(line.trim());
+		if (!m) continue;
+		const id = m[1] ?? m[2].replace(/\s/g, '');
+		const expires = m[3] === 'permanent' ? 'permanent' : `${Math.round(parseFloat(m[3]))} min`;
+		bans.push({ id, expires });
+	}
+	return bans;
+}

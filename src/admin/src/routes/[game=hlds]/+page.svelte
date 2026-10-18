@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import DurationReason from '$lib/DurationReason.svelte';
 	import Flash from '$lib/Flash.svelte';
 	import { autoRefresh } from '$lib/refresh.svelte';
 	import { button, input, small } from '$lib/styles';
@@ -86,7 +87,22 @@
 	</section>
 </div>
 
+<section class="mb-8 rounded border border-zinc-800 p-4">
+	<h2 class="mb-2 font-medium">Say</h2>
+	<form method="POST" action="?/say" use:enhance class="flex flex-wrap items-center gap-2">
+		<input name="msg" required maxlength="190" placeholder="Message to all players" class="{input} min-w-60 flex-1" />
+		<select name="mode" class="{input} w-28">
+			<option value="chat">Chat</option>
+			<option value="center">Centre</option>
+			<option value="hud">HUD</option>
+		</select>
+		<button class={button}>Send</button>
+	</form>
+	<Flash {form} name="say" />
+</section>
+
 <h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-zinc-400">({data.players.length})</span></h2>
+<Flash {form} name="player" />
 {#if data.error}
 	<p class="text-sm text-amber-400">{data.error}</p>
 {:else if !data.players.length}
@@ -94,7 +110,7 @@
 {:else}
 	<table class="w-full text-left text-sm">
 		<thead class="text-zinc-400">
-			<tr><th class="py-2">#</th><th>Name</th><th>ID</th><th>IP</th><th>Frags</th><th>Time</th><th>Ping</th></tr>
+			<tr><th class="py-2">#</th><th>Name</th><th>ID</th><th>IP</th><th>Frags</th><th>Time</th><th>Ping</th><th></th></tr>
 		</thead>
 		<tbody>
 			{#each data.players as p (p.userid)}
@@ -106,6 +122,36 @@
 					<td>{p.frags}</td>
 					<td>{p.time}</td>
 					<td>{p.ping}</td>
+					<td class="text-right">
+						<div class="flex justify-end gap-1">
+							<form method="POST" action="?/kick" use:enhance>
+								<input type="hidden" name="userid" value={p.userid} />
+								<button class={small}>Kick</button>
+							</form>
+							<details class="relative">
+								<summary class="{small} cursor-pointer list-none text-red-400">Ban</summary>
+								<form
+									method="POST"
+									action="?/ban"
+									use:enhance={({ cancel }) => {
+										if (!confirm(`Ban ${p.name}?`)) cancel();
+									}}
+									class="absolute right-0 z-10 mt-1 flex w-96 flex-wrap gap-2 rounded border border-zinc-700 bg-zinc-950 p-3"
+								>
+									<input type="hidden" name="userid" value={p.userid} />
+									<input type="hidden" name="uniqueid" value={p.uniqueid} />
+									<input type="hidden" name="ip" value={p.addr.replace(/:\d+$/, '')} />
+									<select name="type" class="{input} w-28">
+										<option value="both">ID + IP</option>
+										<option value="id">Steam ID</option>
+										<option value="ip">IP</option>
+									</select>
+									<DurationReason />
+									<button class="{small} text-red-400">Ban {p.name}</button>
+								</form>
+							</details>
+						</div>
+					</td>
 				</tr>
 			{/each}
 		</tbody>

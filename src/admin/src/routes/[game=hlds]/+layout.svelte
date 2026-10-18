@@ -6,7 +6,10 @@
 	let { data, children } = $props();
 
 	const base = $derived(`/${data.game}`);
-	const links = $derived([[base, 'Server']] as const);
+	const links = $derived([
+		[base, 'Server'],
+		[`${base}/bans`, 'Bans']
+	] as const);
 	const s = $derived(data.server);
 </script>
 

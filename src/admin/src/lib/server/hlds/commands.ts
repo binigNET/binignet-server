@@ -4,13 +4,19 @@ import { readFile } from 'node:fs/promises';
 import type { GameId } from '$lib/games';
 import type { Result } from '../pvpgn/commands';
 import { GAME_DEFS, dataPath } from './games';
-import { parseMapcycle, parseMaps, parseStatus, type Player } from './parse';
+import { parseBanList, parseMapcycle, parseMaps, parseStatus, type Ban, type Player } from './parse';
 import { rcon } from './rcon';
 
 const MAP_RE = /^[\w.+-]{1,64}$/;
+// only real Steam IDs are bannable; LAN/BOT/HLTV ids are shared
+const STEAMID_RE = /^STEAM_[0-5]:[01]:\d{1,10}$/;
+const IP_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
 const MAX_BOTS = 31;
 
 const bad = (message: string): Result => ({ ok: false, message });
+
+/** Free text for the console: no quotes, newlines or `;` (command separator). */
+const clean = (s: string) => s.replace(/["\\;\r\n\0]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 190);
 
 async function exec(game: GameId, cmds: string[], done: string): Promise<Result> {
 	try {
@@ -85,4 +91,68 @@ export async function reAddBots(game: GameId): Promise<Result> {
 	const target = GAME_DEFS[game].defaultBots;
 	if (bots >= target) return { ok: true, message: `Already ${bots} bots.` };
 	return exec(game, GAME_DEFS[game].addBots(bots, target), `Bots: ${bots} → ${target}.`);
+}
+
+// --- players ---
+
+export function kick(game: GameId, userid: number, reason: string): Promise<Result> {
+	if (!Number.isInteger(userid) || userid < 1) return Promise.resolve(bad('invalid user id'));
+	const r = clean(reason);
+	return exec(game, [`kick #${userid}${r ? ` ${r}` : ''}`], 'Kicked.');
+}
+
+export type BanType = 'id' | 'ip' | 'both';
+
+/** Ban by Steam ID and/or IP for `minutes` (0 = permanent), persist, then kick. */
+export async function ban(
+	game: GameId,
+	p: { userid: number; uniqueid: string; ip: string },
+	type: BanType,
+	minutes: number,
+	reason: string
+): Promise<Result> {
+	if (!Number.isInteger(minutes) || minutes < 0) return bad('invalid duration');
+	const cmds: string[] = [];
+	const notes: string[] = [];
+	if (type !== 'ip') {
+		if (STEAMID_RE.test(p.uniqueid)) cmds.push(`banid ${minutes} ${p.uniqueid}`, 'writeid');
+		else if (type === 'id') return bad(`${p.uniqueid || 'id'} is not a bannable Steam ID — ban by IP`);
+		else notes.push(`${p.uniqueid} not bannable, IP only`);
+	}
+	if (type !== 'id') {
+		if (!IP_RE.test(p.ip)) return bad('invalid IP');
+		cmds.push(`addip ${minutes} ${p.ip}`, 'writeip');
+	}
+	const k = await kick(game, p.userid, `Banned${reason.trim() ? `: ${reason}` : ''}`);
+	const r = await exec(game, cmds, 'Banned.');
+	if (!r.ok) return r;
+	return { ok: true, message: ['Banned.', ...notes, k.ok ? '' : `kick failed: ${k.message}`].filter(Boolean).join(' ') };
+}
+
+export async function bans(game: GameId): Promise<{ ids: Ban[]; ips: Ban[]; error: string }> {
+	try {
+		const ids = parseBanList(await rcon(game).run('listid'));
+		const ips = parseBanList(await rcon(game).run('listip'));
+		return { ids, ips, error: '' };
+	} catch (e) {
+		return { ids: [], ips: [], error: (e as Error).message };
+	}
+}
+
+export function unban(game: GameId, id: string): Promise<Result> {
+	if (STEAMID_RE.test(id)) return exec(game, [`removeid ${id}`, 'writeid'], `Unbanned ${id}.`);
+	if (IP_RE.test(id)) return exec(game, [`removeip ${id}`, 'writeip'], `Unbanned ${id}.`);
+	return Promise.resolve(bad('invalid Steam ID / IP'));
+}
+
+// --- chat ---
+
+const SAY = { chat: 'amx_say', center: 'amx_csay', hud: 'amx_tsay' } as const;
+export type SayMode = keyof typeof SAY;
+
+export function say(game: GameId, msg: string, mode: SayMode): Promise<Result> {
+	const m = clean(msg);
+	if (!m) return Promise.resolve(bad('empty message'));
+	if (!Object.hasOwn(SAY, mode)) return Promise.resolve(bad('invalid mode'));
+	return exec(game, [`${SAY[mode]} ${m}`], 'Sent.');
 }

@@ -1,4 +1,4 @@
-// aura data dir (./aura/data): maps, mapcfgs, aura.log.
+// aura data dir (./aura/data): maps, mapcfgs, saves, aura.log.
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { config } from '../env';
@@ -6,6 +6,7 @@ import { config } from '../env';
 export const auraPath = (...p: string[]) => path.join(config.paths.aura, ...p);
 export const mapsDir = () => auraPath('maps');
 export const mapcfgsDir = () => auraPath('mapcfgs');
+export const savesDir = () => auraPath('saves');
 
 export type MapFile = { name: string; size: number; mtime: Date };
 

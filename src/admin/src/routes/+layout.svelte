@@ -16,6 +16,7 @@
 			<a href="/bans" class="hover:text-zinc-100">Bans</a>
 			<a href="/messages" class="hover:text-zinc-100">Messages</a>
 			<a href="/maps" class="hover:text-zinc-100">Maps</a>
+			<a href="/saves" class="hover:text-zinc-100">Saves</a>
 			<a href="/banner" class="hover:text-zinc-100">Banner</a>
 			<a href="/logs" class="hover:text-zinc-100">Logs</a>
 		</nav>

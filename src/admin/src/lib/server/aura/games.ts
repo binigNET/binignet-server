@@ -96,7 +96,7 @@ export async function hostable(): Promise<Hostable> {
 }
 
 const HOSTED_RE = /(Private game|Game) hosted: /;
-const GAME_NAME_RE = /^[^,\r\n]{1,30}$/; // aura: comma-separated args, max 30 chars w/ default rehost template
+export const GAME_NAME_RE = /^[^,\r\n]{1,30}$/; // aura: comma-separated args, max 30 chars w/ default rehost template
 
 /** `!host[priv] <map>, <name>` via whisper. Owner = dashboard account (absent → lobby ownerless after 2 min). */
 export async function hostGame(o: { map: string; name: string; priv: boolean }): Promise<{ ok: boolean; message: string }> {

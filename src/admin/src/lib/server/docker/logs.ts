@@ -3,7 +3,8 @@ import http from 'node:http';
 import { config } from '../env';
 
 /** Containers whose logs the dashboard may show, by source key. */
-export const LOG_SOURCES = { aura: 'aura' } as const;
+export const LOG_SOURCES = { aura: 'aura', cs: 'cs', hldm: 'hldm' } as const;
+export type LogSource = keyof typeof LOG_SOURCES;
 
 export type LogLine = { ts: string; stream: 'out' | 'err'; text: string };
 

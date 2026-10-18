@@ -1,13 +1,16 @@
-// Server-sent events: aura's log lines, live. Event ids are docker timestamps, so a
+// Server-sent events: a container's log lines (?source=, default aura), live. Event ids are docker timestamps, so a
 // reconnecting EventSource (Last-Event-ID) resumes right after the last line it got.
-import { LOG_SOURCES, followLogs, tsToNs, type LogLine } from '$lib/server/docker/logs';
+import { error } from '@sveltejs/kit';
+import { LOG_SOURCES, followLogs, tsToNs, type LogLine, type LogSource } from '$lib/server/docker/logs';
 
 const TAIL = 300;
 const RETRY_MS = 5000;
 const PING_MS = 15_000;
 
-export const GET = ({ request }) => {
-	const container = LOG_SOURCES.aura;
+export const GET = ({ request, url }) => {
+	const source = url.searchParams.get('source') || 'aura';
+	if (!Object.hasOwn(LOG_SOURCES, source)) error(400, 'unknown log source');
+	const container = LOG_SOURCES[source as LogSource];
 	const ac = new AbortController();
 	request.signal.addEventListener('abort', () => ac.abort());
 	const resumeId = request.headers.get('last-event-id');

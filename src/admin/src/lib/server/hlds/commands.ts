@@ -243,3 +243,16 @@ export async function saveCvar(game: GameId, name: string, raw: string): Promise
 	const r = await setCvar(game, name, v);
 	return r.ok ? { ok: true, message: `${r.message} (saved)` } : { ok: false, message: `saved, but apply failed: ${r.message}` };
 }
+
+// --- console ---
+
+/** Any console command (admin only); `;` chains commands like the in-game console. */
+export async function raw(game: GameId, cmd: string): Promise<Result> {
+	const c = cmd.trim();
+	if (!c || c.length > 500 || /[\r\n\0]/.test(c)) return bad('invalid command');
+	try {
+		return { ok: true, message: (await rcon(game).run(c, { quietMs: 500 })).trimEnd() || '(no output)' };
+	} catch (e) {
+		return bad((e as Error).message);
+	}
+}

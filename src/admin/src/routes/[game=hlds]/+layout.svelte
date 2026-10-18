@@ -9,7 +9,9 @@
 	const links = $derived([
 		[base, 'Server'],
 		[`${base}/bans`, 'Bans'],
-		[`${base}/settings`, 'Settings']
+		[`${base}/settings`, 'Settings'],
+		[`${base}/console`, 'Console'],
+		[`${base}/logs`, 'Logs']
 	] as const);
 	const s = $derived(data.server);
 </script>

@@ -33,11 +33,12 @@ export function exchange(
 			sock.close();
 			resolve(packets);
 		}
-		sock.on('error', (e) => {
+		sock.on('error', (e: NodeJS.ErrnoException) => {
 			clearTimeout(quiet);
 			clearTimeout(max);
 			sock.close();
-			reject(e);
+			// ICMP port unreachable (server down) / unknown container name
+			reject(e.code === 'ECONNREFUSED' || e.code === 'ENOTFOUND' ? new Error(`unreachable (${e.code})`) : e);
 		});
 		sock.on('message', (msg) => {
 			if (msg.length < 5) return;
@@ -113,10 +114,9 @@ class HldsRcon {
 				this.lastError = '';
 				return out;
 			} catch (e) {
-				if (this.state !== 'badpass' || Date.now() >= this.blockedUntil) {
-					this.state = 'unreachable';
-					this.lastError = (e as Error).message;
-				}
+				if (this.state === 'badpass' && Date.now() < this.blockedUntil) throw e;
+				this.state = 'unreachable';
+				this.lastError = (e as Error).message;
 				throw e;
 			}
 		});

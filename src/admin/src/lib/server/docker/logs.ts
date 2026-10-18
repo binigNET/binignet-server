@@ -19,18 +19,27 @@ export function tsToNs(ts: string): bigint {
 	return BigInt(Date.parse(m[1] + 'Z')) * 1_000_000n + BigInt(frac);
 }
 
+/** Whether the container runs with a TTY (its log stream is then not multiplexed). 404 → not running. */
+async function hasTty(container: string, signal: AbortSignal): Promise<boolean> {
+	const res = await fetch(`${config.dockerApi()}/containers/${encodeURIComponent(container)}/json`, { signal });
+	if (res.status === 404) throw new Error(`${container} not running`);
+	if (!res.ok) throw new Error((await res.text()).trim() || `docker ${res.status}`);
+	return Boolean(((await res.json()) as { Config?: { Tty?: boolean } }).Config?.Tty);
+}
+
 const nsToSince = (ns: bigint) => `${ns / 1_000_000_000n}.${String(ns % 1_000_000_000n).padStart(9, '0')}`;
 
 /**
  * Stream log lines until the container stops (resolves) or the request fails (throws).
  * `onAttach` fires once docker accepts the request.
  */
-export function followLogs(
+export async function followLogs(
 	container: string,
 	opts: { tail?: number; sinceNs?: bigint; signal: AbortSignal },
 	onAttach: () => void,
 	onLine: (line: LogLine) => void
 ): Promise<void> {
+	const tty = await hasTty(container, opts.signal);
 	const q = new URLSearchParams({ stdout: '1', stderr: '1', follow: '1', timestamps: '1' });
 	if (opts.sinceNs !== undefined) q.set('since', nsToSince(opts.sinceNs));
 	else q.set('tail', String(opts.tail ?? 300));
@@ -49,26 +58,35 @@ export function followLogs(
 				return;
 			}
 			onAttach();
-			// non-TTY containers multiplex stdout/stderr: [type, 0, 0, 0, size uint32 BE] + payload
-			let acc: Buffer = Buffer.alloc(0);
 			const partial = { out: '', err: '' };
-			res.on('data', (chunk: Buffer) => {
-				acc = acc.length ? Buffer.concat([acc, chunk]) : chunk;
-				while (acc.length >= 8) {
-					const size = acc.readUInt32BE(4);
-					if (acc.length < 8 + size) break;
-					const stream = acc[0] === 2 ? 'err' : 'out';
-					const text = partial[stream] + acc.subarray(8, 8 + size).toString('utf8');
-					acc = acc.subarray(8 + size);
-					const lines = text.split('\n');
-					partial[stream] = lines.pop() ?? '';
-					for (const raw of lines) {
-						const sp = raw.indexOf(' ');
-						if (sp < 0) continue;
-						onLine({ ts: raw.slice(0, sp), stream, text: raw.slice(sp + 1).replace(/\r$/, '').replace(AURA_TIME_RE, '') });
-					}
+			const emit = (stream: 'out' | 'err', chunk: string) => {
+				const lines = (partial[stream] + chunk).split('\n');
+				partial[stream] = lines.pop() ?? '';
+				for (const raw of lines) {
+					const sp = raw.indexOf(' ');
+					if (sp < 0) continue;
+					onLine({ ts: raw.slice(0, sp), stream, text: raw.slice(sp + 1).replace(/\r$/, '').replace(AURA_TIME_RE, '') });
 				}
-			});
+			};
+			// TTY containers (hldm) send one raw stream
+			if (tty) {
+				res.setEncoding('utf8');
+				res.on('data', (chunk: string) => emit('out', chunk));
+			} else {
+				// non-TTY containers multiplex stdout/stderr: [type, 0, 0, 0, size uint32 BE] + payload
+				let acc: Buffer = Buffer.alloc(0);
+				res.on('data', (chunk: Buffer) => {
+					acc = acc.length ? Buffer.concat([acc, chunk]) : chunk;
+					while (acc.length >= 8) {
+						const size = acc.readUInt32BE(4);
+						if (acc.length < 8 + size) break;
+						const stream = acc[0] === 2 ? 'err' : 'out';
+						const text = acc.subarray(8, 8 + size).toString('utf8');
+						acc = acc.subarray(8 + size);
+						emit(stream, text);
+					}
+				});
+			}
 			res.on('end', () => resolve());
 			res.on('error', reject);
 		});

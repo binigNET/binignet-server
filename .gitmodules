@@ -1,0 +1,3 @@
+[submodule "src/rehlds-cs"]
+	path = src/rehlds-cs
+	url = https://github.com/jstnmthw/rehlds-docker.git

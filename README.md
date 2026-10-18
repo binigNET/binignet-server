@@ -95,6 +95,16 @@ Web UI at `https://bnetadmin.bubuyogg.com` (`ADMIN_DOMAIN`), served by Caddy wit
 - The dashboard logs in to pvpgn over telnet (port 23, internal network only). Only one session per account, so don't log in as `binignet_admin` elsewhere.
 - Local dev: add a gitignored `docker-compose.override.yml` that publishes `admin` on `127.0.0.1:3000`, sets `ORIGIN=http://localhost:3000` and `ADDRESS_HEADER=`, and disables `caddy` (`profiles: [disabled]`). On macOS also move `pvpgn-db` to a named volume (the `./pvpgn/database` bind breaks MySQL table-name case).
 
+### 🔫 CS 1.6 / Half-Life DM servers
+Two ReHLDS servers run next to pvpgn: `cs` (Counter-Strike 1.6, UDP `27015`, built from the `src/rehlds-cs` submodule) and `hldm` (Half-Life Deathmatch, UDP `27016`). The dashboard controls both over RCON.
+1. `git submodule update --init` (fetches `src/rehlds-cs`).
+2. In `.env` set `CS_RCON_PASSWORD` and `HLDM_RCON_PASSWORD` (`openssl rand -hex 16`). RCON uses the public game port, so keep them long. A wrong password gets the sender IP banned for an hour (`sv_rcon_banpenalty`).
+3. `mkdir -p cs/serverdata && sudo chown 1000:1000 cs/serverdata` and `./scripts/hldm-seed.sh` (copies stock maps/cfgs into `./hldm`).
+4. Open UDP `27015`, `27016` in the firewall, then `docker compose up -d --build cs hldm admin`.
+- CS data: `./cs/serverdata/cstrike` (`server-custom.cfg`, `addons/yapb/conf/yapb.cfg`, `maps/`, `mapcycle.txt`, AMXX configs, bans). `server.cfg` is regenerated on start, don't edit it.
+- HLDM data: `./hldm` (`config/server.cfg` runs on every map change, `jk_botti.cfg`, `maps/`, `mapcycle.txt`, bans).
+- Custom maps: drop `.bsp` (+ `.wad`/`.res`) into the `maps/` dir; they show up in the dashboard's map list.
+
 ### 🕹 Commands (*)
 
 1. To see the list of available commands visit [Aura Commands](https://github.com/jasjamjos/aura-bot/blob/master/COMMANDS.md)
@@ -144,6 +154,10 @@ docker compose logs -f --tail 200 pvpgn
 #### Aura Logs
 ```shell
 docker compose logs -f --tail 200 aura
+```
+#### CS / HLDM Logs
+```shell
+docker compose logs -f --tail 200 cs hldm
 ```
 
 ### 💾 Backup / restore

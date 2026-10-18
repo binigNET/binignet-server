@@ -11,3 +11,5 @@ aura/data/*
 .DS_Store
 pvpgn/admin
 docker-compose.override.yml
+cs/
+hldm/

@@ -108,6 +108,87 @@ services:
         max-size: 10m
         max-file: "3"
 
+  # Counter-Strike 1.6 (ReHLDS + ReGameDLL + AMXX + YaPB), built from src/rehlds-cs.
+  # Whole server tree lives in ./cs/serverdata (must be owned by uid 1000).
+  cs:
+    restart: unless-stopped
+    container_name: cs
+    image: rehlds-cstrike:local
+    platform: linux/amd64
+    build:
+      context: ./src/rehlds-cs
+      args:
+        GAME: cstrike
+        STEAM_BRANCH: steam_legacy
+        GPG_VERIFY: "true"
+    init: true
+    stop_grace_period: 30s
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - SERVER_PORT=27015
+      - CLIENT_PORT=27005
+      - SERVER_NAME=${CS_SERVER_NAME:-binignet CS 1.6}
+      - RCON_PASSWORD=${CS_RCON_PASSWORD:?CS_RCON_PASSWORD not set}
+      - OWNER=${CS_OWNER:-}
+      - SV_REGION=${CS_SV_REGION:-255}
+      - MAX_PLAYERS=${CS_MAX_PLAYERS:-16}
+      - DEFAULT_MAP=${CS_DEFAULT_MAP:-de_dust2}
+      - BOTS_ENABLED=true
+      - REUNION_ENABLED=${CS_REUNION_ENABLED:-false}
+    ports:
+      - 27015:27015/udp
+    volumes:
+      - ./cs/serverdata:/server
+    healthcheck:
+      test: ["CMD", "/opt/hlds/healthcheck.sh"]
+      interval: 60s
+      timeout: 15s
+      start_period: 90s
+      retries: 3
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  # Half-Life Deathmatch (ReHLDS + AMXX + jk_botti). Run scripts/hldm-seed.sh once
+  # first: it copies the stock maps/cfgs out of the image into ./hldm (mounting
+  # over valve/maps would otherwise hide them) and fixes ownership.
+  hldm:
+    restart: unless-stopped
+    container_name: hldm
+    image: artkirienko/rehlds@sha256:cfc2bcedd423d2c4d8da9d4ed046a9a8dfa55ce46c54372d1906949740ef45f2
+    platform: linux/amd64
+    init: true
+    stop_grace_period: 30s
+    command:
+      - "+map ${HLDM_DEFAULT_MAP:-crossfire}"
+      - "-port 27016"
+      - "+maxplayers ${HLDM_MAX_PLAYERS:-12}"
+      - "+rcon_password ${HLDM_RCON_PASSWORD:?HLDM_RCON_PASSWORD not set}"
+    ports:
+      - 27016:27016/udp
+    volumes:
+      - ./hldm/config:/opt/steam/hlds/valve/config
+      - ./hldm/maps:/opt/steam/hlds/valve/maps
+      - ./hldm/mapcycle.txt:/opt/steam/hlds/valve/mapcycle.txt
+      - ./hldm/banned.cfg:/opt/steam/hlds/valve/banned.cfg
+      - ./hldm/listip.cfg:/opt/steam/hlds/valve/listip.cfg
+      - ./hldm/jk_botti.cfg:/opt/steam/hlds/valve/addons/jk_botti/jk_botti.cfg
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
   admin:
     restart: unless-stopped
     container_name: binignet_admin
@@ -130,10 +211,19 @@ services:
       - PVPGN_ADMIN_PASS=${PVPGN_ADMIN_PASS:?PVPGN_ADMIN_PASS not set}
       - AURA_BOT=${AURA_REALM1_USERNAME}
       - DOCKER_API=http://docker-proxy:2375
+      - CS_HOST=cs
+      - CS_PORT=27015
+      - CS_RCON_PASSWORD=${CS_RCON_PASSWORD}
+      - HLDM_HOST=hldm
+      - HLDM_PORT=27016
+      - HLDM_RCON_PASSWORD=${HLDM_RCON_PASSWORD}
     volumes:
       - ./pvpgn/admin:/data/pvpgn-admin
       - pvpgn-status:/data/pvpgn-status:ro
       - ./aura/data:/data/aura
+      # game server cfgs (bot/cvar defaults) + ban lists
+      - ./cs/serverdata/cstrike:/data/cs
+      - ./hldm:/data/hldm
     networks:
       - internal
       - dockerapi

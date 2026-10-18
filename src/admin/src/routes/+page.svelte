@@ -14,7 +14,9 @@
 				[
 					`${HLDS_GAMES[s.game].label} server`,
 					!!s.info,
-					s.info ? `${s.info.map}, ${s.info.players - s.info.bots}/${s.info.maxPlayers} players` : s.error
+					s.info
+						? `${s.info.map}, ${s.info.players - s.info.bots}/${s.info.maxPlayers} players (via ${s.source === 'rcon' ? 'rcon' : 'query'})`
+						: s.error
 				] as const
 		)
 	]);

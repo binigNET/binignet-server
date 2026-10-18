@@ -44,7 +44,7 @@ export function parseInfo(p: Buffer): ServerInfo | null {
 	return null;
 }
 
-export async function queryInfo(host: string, port: number): Promise<ServerInfo> {
+async function queryOnce(host: string, port: number): Promise<ServerInfo | null> {
 	let reply = await exchange(host, port, QUERY, OPTS);
 	const ch = reply.find((p) => p[4] === 0x41 && p.length >= 9);
 	if (ch) reply = await exchange(host, port, Buffer.concat([QUERY, ch.subarray(5, 9)]), OPTS);
@@ -52,5 +52,12 @@ export async function queryInfo(host: string, port: number): Promise<ServerInfo>
 		const info = parseInfo(p);
 		if (info) return info;
 	}
-	throw new Error('no reply');
+	return null;
+}
+
+/** One retry: servers rate-limit queries per IP (sv_max_queries_sec) and drop the excess. */
+export async function queryInfo(host: string, port: number): Promise<ServerInfo> {
+	const info = (await queryOnce(host, port)) ?? (await queryOnce(host, port));
+	if (!info) throw new Error('no reply');
+	return info;
 }

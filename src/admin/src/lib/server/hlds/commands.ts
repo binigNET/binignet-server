@@ -5,6 +5,7 @@ import type { GameId } from '$lib/games';
 import type { Result } from '../pvpgn/commands';
 import { getLine, readCfg, setLine, writeCfg } from './cfg';
 import { GAME_DEFS, dataPath, type Cvar } from './games';
+import { invalidateStatus } from './info';
 import { parseBanList, parseCvars, parseMapcycle, parseMaps, parseStatus, type Ban, type Player } from './parse';
 import { rcon } from './rcon';
 
@@ -23,6 +24,7 @@ async function exec(game: GameId, cmds: string[], done: string): Promise<Result>
 	try {
 		const out: string[] = [];
 		for (const c of cmds) out.push(await rcon(game).run(c));
+		invalidateStatus(game);
 		return { ok: true, message: out.join('').trim() || done };
 	} catch (e) {
 		return bad((e as Error).message);

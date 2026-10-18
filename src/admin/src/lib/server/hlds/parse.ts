@@ -35,6 +35,15 @@ export function parseStatus(out: string): Player[] {
 	return players;
 }
 
+/** Header of `status`: hostname / map / players lines. Null if not a status reply. */
+export function parseStatusHeader(out: string): { name: string; map: string; players: number; maxPlayers: number } | null {
+	const name = /^hostname\s*:\s*(.*?)\s*$/m.exec(out);
+	const map = /^map\s*:\s*(\S+)/m.exec(out);
+	const players = /^players\s*:\s*(\d+) active \((\d+) max\)/m.exec(out);
+	if (!map || !players) return null;
+	return { name: name?.[1] ?? '', map: map[1], players: Number(players[1]), maxPlayers: Number(players[2]) };
+}
+
 /** `maps *` → sorted unique map names */
 export function parseMaps(out: string): string[] {
 	const names = new Set<string>();

@@ -7,7 +7,6 @@ import {
 	kick,
 	kickBots,
 	mapList,
-	players,
 	reAddBots,
 	restart,
 	saveBotDefaults,
@@ -18,10 +17,18 @@ import {
 } from '$lib/server/hlds/commands';
 import { GAME_DEFS } from '$lib/server/hlds/games';
 
-export const load = async ({ params }) => {
+export const load = async ({ params, parent }) => {
 	const def = GAME_DEFS[params.game];
-	const [p, maps, botCfg] = await Promise.all([players(params.game), mapList(params.game), botSettings(params.game)]);
-	return { ...p, maps, botCfg, restartLabel: def.restart.label };
+	// players come from the layout's (shared) `status` call
+	const [{ server }, maps, botCfg] = await Promise.all([parent(), mapList(params.game), botSettings(params.game)]);
+	return {
+		players: server.players ?? [],
+		bots: server.bots,
+		error: server.players ? '' : `player list needs rcon (${server.rcon.error || server.error || 'unavailable'})`,
+		maps,
+		botCfg,
+		restartLabel: def.restart.label
+	};
 };
 
 export const actions = {

@@ -1,21 +1,36 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import { submit } from '$lib/submit';
 	import DurationReason from '$lib/DurationReason.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { latest } from '$lib/latest.svelte';
 	import { autoRefresh } from '$lib/refresh.svelte';
 	import { button, input, small } from '$lib/styles';
 
 	let { data } = $props();
 	autoRefresh(10_000);
 
-	const info = $derived(data.server.info);
-	// $state, not $derived: autoRefresh reloads data and would reset the pick
-	let map = $state(untrack(() => data.server.info?.map ?? data.maps.cycle[0] ?? data.maps.other[0] ?? ''));
+	const server = latest(() => data.server);
+	const maps = latest(() => data.maps);
+	const info = $derived(server.value?.info);
+	const players = $derived(server.value?.players ?? []);
+	const bots = $derived(server.value?.bots ?? 0);
+	const error = $derived(
+		server.value && !server.value.players
+			? `player list needs rcon (${server.value.rcon.error || server.value.error || 'unavailable'})`
+			: ''
+	);
+	// $state, not $derived: autoRefresh reloads data and would reset the pick; set once data arrives
+	let map = $state('');
+	$effect(() => {
+		if (!map) map = info?.map ?? maps.value?.cycle[0] ?? maps.value?.other[0] ?? '';
+	});
 	let custom = $state('');
 	const sk = $derived(data.botCfg.skill);
 </script>
 
-{#if info}
+{#if !server.value}
+	<div class="mb-6 space-y-2"><Skeleton class="h-4 w-64" /><Skeleton class="h-4 w-40" /><Skeleton class="h-4 w-52" /></div>
+{:else if info}
 	<dl class="mb-6 grid grid-cols-[8rem_1fr] gap-y-1 text-sm">
 		<dt class="text-zinc-400">Hostname</dt>
 		<dd>{info.name}</dd>
@@ -35,14 +50,18 @@
 			use:submit={{ confirm: `Change map to ${custom.trim() || map}?`, reset: false }}
 			class="flex flex-wrap items-center gap-2"
 		>
-			<select name="map" bind:value={map} class="{input} max-w-56">
-				{#if data.maps.cycle.length}
-					<optgroup label="Map cycle">{#each data.maps.cycle as m}<option value={m}>{m}</option>{/each}</optgroup>
-				{/if}
-				{#if data.maps.other.length}
-					<optgroup label="Other">{#each data.maps.other as m}<option value={m}>{m}</option>{/each}</optgroup>
-				{/if}
-			</select>
+			{#if !maps.value}
+				<Skeleton class="h-9 w-56" />
+			{:else}
+				<select name="map" bind:value={map} class="{input} max-w-56">
+					{#if maps.value.cycle.length}
+						<optgroup label="Map cycle">{#each maps.value.cycle as m}<option value={m}>{m}</option>{/each}</optgroup>
+					{/if}
+					{#if maps.value.other.length}
+						<optgroup label="Other">{#each maps.value.other as m}<option value={m}>{m}</option>{/each}</optgroup>
+					{/if}
+				</select>
+			{/if}
 			<input name="custom" bind:value={custom} maxlength="64" placeholder="or type a map" class="{input} w-40" />
 			<button class={button}>Change map</button>
 		</form>
@@ -57,14 +76,14 @@
 	</section>
 
 	<section class="rounded border border-zinc-800 p-4">
-		<h2 class="mb-2 font-medium">Bots <span class="text-sm font-normal text-zinc-400">({data.bots} in game)</span></h2>
+		<h2 class="mb-2 font-medium">Bots <span class="text-sm font-normal text-zinc-400">({bots} in game)</span></h2>
 		<div class="flex flex-wrap items-center gap-2">
 			<form
 				method="POST"
 				action="?/kickbots"
-				use:submit={{ confirm: { title: `Kick all ${data.bots} bots?`, destructive: true } }}
+				use:submit={{ confirm: { title: `Kick all ${bots} bots?`, destructive: true } }}
 			>
-				<button class="{small} text-red-400" disabled={!data.bots}>Kick all bots</button>
+				<button class="{small} text-red-400" disabled={!bots}>Kick all bots</button>
 			</form>
 			<form method="POST" action="?/readdbots" use:submit>
 				<button class={small}>Re-add bots ({data.botCfg.defaults.bots})</button>
@@ -103,10 +122,12 @@
 	</form>
 </section>
 
-<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-zinc-400">({data.players.length})</span></h2>
-{#if data.error}
-	<p class="text-sm text-amber-400">{data.error}</p>
-{:else if !data.players.length}
+<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-zinc-400">({players.length})</span></h2>
+{#if !server.value}
+	<div class="space-y-2"><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /></div>
+{:else if error}
+	<p class="text-sm text-amber-400">{error}</p>
+{:else if !players.length}
 	<p class="text-sm text-zinc-400">No players online.</p>
 {:else}
 	<table class="w-full text-left text-sm">
@@ -114,7 +135,7 @@
 			<tr><th class="py-2">#</th><th>Name</th><th>ID</th><th>IP</th><th>Frags</th><th>Time</th><th>Ping</th><th></th></tr>
 		</thead>
 		<tbody>
-			{#each data.players as p (p.userid)}
+			{#each players as p (p.userid)}
 				<tr class="border-t border-zinc-800">
 					<td class="py-2 text-zinc-400">{p.userid}</td>
 					<td>{p.name}</td>

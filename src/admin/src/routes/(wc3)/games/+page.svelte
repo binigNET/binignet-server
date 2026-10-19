@@ -3,6 +3,9 @@
 	import { submit } from '$lib/submit';
 	import { Button } from '$lib/components/ui/button';
 	import { ago } from '$lib/format';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { latest } from '$lib/latest.svelte';
 	import { autoRefresh } from '$lib/refresh.svelte';
 	import { input, small } from '$lib/styles';
 
@@ -10,17 +13,22 @@
 	autoRefresh();
 	// $state, not $derived: autoRefresh reloads data and would reset the pick
 	let map = $state(untrack(() => data.prefillMap || data.hostable.configs[0] || data.hostable.maps[0] || ''));
-	const lobbyOpen = $derived(data.games.some((g) => g.aura?.lobby));
+	const live = latest(() => data.live);
+	const games = $derived(live.value?.games ?? []);
+	const lobbyOpen = $derived(games.some((g) => g.aura?.lobby));
 </script>
 
 <div class="mb-4 flex items-baseline gap-3">
 	<h1 class="text-xl font-semibold">Games</h1>
 	<span class="text-sm text-zinc-400">
-		{data.games.length} active{#if data.updatedAt} · status {ago(data.updatedAt)}{/if}
+		{#if live.value}{games.length} active{/if}{#if data.updatedAt} · status {ago(data.updatedAt)}{/if}
 	</span>
+	{#if live.pending && live.value}
+		<span class="flex items-center gap-1 text-xs text-zinc-400"><Spinner class="size-3" /> updating…</span>
+	{/if}
 </div>
-{#if data.auraError}
-	<p class="mb-3 text-sm text-amber-400">aura unavailable ({data.auraError}) — showing pvpgn listing only</p>
+{#if live.value?.auraError}
+	<p class="mb-3 text-sm text-amber-400">aura unavailable ({live.value.auraError}) — showing pvpgn listing only</p>
 {/if}
 
 <section class="mb-8 max-w-3xl rounded border border-zinc-800 p-4">
@@ -56,7 +64,9 @@
 </section>
 
 
-{#if !data.games.length}
+{#if !live.value}
+	<div class="space-y-2"><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /></div>
+{:else if !games.length}
 	<p class="text-sm text-zinc-400">No games.</p>
 {:else}
 	<table class="w-full text-left text-sm">
@@ -64,7 +74,7 @@
 			<tr><th class="py-2">Name</th><th>Map</th><th>State</th><th>Owner</th><th>Slots</th><th>Time</th><th>Players (pvpgn)</th><th></th></tr>
 		</thead>
 		<tbody>
-			{#each data.games as { aura, pvpgn }, i (i)}
+			{#each games as { aura, pvpgn }, i (i)}
 				<tr class="border-t border-zinc-800 align-top">
 					<td class="py-2">{aura?.name ?? pvpgn?.name}</td>
 					<td>{aura?.map ?? '—'}</td>

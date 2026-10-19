@@ -17,19 +17,12 @@ import {
 } from '$lib/server/hlds/commands';
 import { GAME_DEFS } from '$lib/server/hlds/games';
 
-export const load = async ({ params, parent }) => {
-	const def = GAME_DEFS[params.game];
-	// players come from the layout's (shared) `status` call
-	const [{ server }, maps, botCfg] = await Promise.all([parent(), mapList(params.game), botSettings(params.game)]);
-	return {
-		players: server.players ?? [],
-		bots: server.bots,
-		error: server.players ? '' : `player list needs rcon (${server.rcon.error || server.error || 'unavailable'})`,
-		maps,
-		botCfg,
-		restartLabel: def.restart.label
-	};
-};
+// players come from the layout's (shared) `status` call; `maps` is streamed
+export const load = async ({ params }) => ({
+	maps: mapList(params.game),
+	botCfg: await botSettings(params.game),
+	restartLabel: GAME_DEFS[params.game].restart.label
+});
 
 export const actions = {
 	restart: async ({ params }) => respond('restart', await restart(params.game)),

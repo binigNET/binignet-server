@@ -1,3 +1,4 @@
 import { serverStatus } from '$lib/server/hlds/info';
 
-export const load = async ({ params }) => ({ game: params.game, server: await serverStatus(params.game) });
+// `server` is streamed (not awaited) so navigation doesn't wait on rcon
+export const load = async ({ params }) => ({ game: params.game, server: serverStatus(params.game) });

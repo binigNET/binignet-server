@@ -19,6 +19,7 @@ export type AuraGame = {
 
 const ITEM_RE = /(Lobby|Game)#(\d+): \[(.*?)\] "(.*?)" - (.*?) - (\d+)\/(\d+) : (\d+)min/g;
 const TTL_MS = 15_000;
+const MAX_STALE_MS = 120_000;
 
 let cache: { at: number; games: AuraGame[] } | null = null;
 let inflight: Promise<AuraGame[]> | null = null;
@@ -37,8 +38,12 @@ export function parseAuraGames(lines: string[]): AuraGame[] {
 	}));
 }
 
-/** Cached ~15s (`fresh` skips the cache); one whisper in flight at a time. Throws if pvpgn/aura unreachable. */
-export async function auraGames({ fresh = false } = {}): Promise<AuraGame[]> {
+/**
+ * Cached ~15s (`fresh` skips the cache); one whisper in flight at a time. With `stale`, an
+ * expired list (up to 2 min old) is returned at once and refreshed in the background.
+ * Throws if pvpgn/aura unreachable.
+ */
+export async function auraGames({ fresh = false, stale = false } = {}): Promise<AuraGame[]> {
 	if (!fresh && cache && Date.now() - cache.at < TTL_MS) return cache.games;
 	inflight ??= pvpgn
 		.askAura('!games')
@@ -48,7 +53,16 @@ export async function auraGames({ fresh = false } = {}): Promise<AuraGame[]> {
 			cache = { at: Date.now(), games };
 			return games;
 		})
+		.catch((e) => {
+			// drop the stale list so the next caller sees the error
+			cache = null;
+			throw e;
+		})
 		.finally(() => (inflight = null));
+	if (stale && !fresh && cache && Date.now() - cache.at < MAX_STALE_MS) {
+		inflight.catch(() => {});
+		return cache.games;
+	}
 	return inflight;
 }
 

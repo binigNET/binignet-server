@@ -7,7 +7,7 @@ import { rcon } from './rcon';
 // Pages, layouts and the overview all ask for this at once (and again on every
 // auto-refresh), so share one result briefly: the servers drop queries past a
 // few per second from one IP.
-const TTL_MS = 2000;
+const TTL_MS = 5000;
 const cache = new Map<GameId, { at: number; p: Promise<Status> }>();
 
 type Status = {

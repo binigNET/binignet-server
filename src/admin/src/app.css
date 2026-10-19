@@ -1,1 +1,126 @@
 @import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn-svelte/tailwind.css";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/fira-code";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+	/* tweakcn "cyberpunk" theme */
+	--background: oklch(0.9816 0.0017 247.839);
+	--foreground: oklch(0.1649 0.0352 281.8285);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.1649 0.0352 281.8285);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.1649 0.0352 281.8285);
+	--primary: oklch(0.6726 0.2904 341.4084);
+	--primary-foreground: oklch(1 0 0);
+	--secondary: oklch(0.9595 0.02 286.0164);
+	--secondary-foreground: oklch(0.1649 0.0352 281.8285);
+	--muted: oklch(0.9595 0.02 286.0164);
+	--muted-foreground: oklch(0.1649 0.0352 281.8285);
+	--accent: oklch(0.8903 0.1739 171.269);
+	--accent-foreground: oklch(0.1649 0.0352 281.8285);
+	--destructive: oklch(0.6535 0.2348 34.037);
+	--destructive-foreground: oklch(1 0 0);
+	--success: oklch(0.8903 0.1739 171.269);
+	--success-foreground: oklch(0.1649 0.0352 281.8285);
+	--warning: oklch(0.9168 0.1915 101.407);
+	--warning-foreground: oklch(0.1649 0.0352 281.8285);
+	--border: oklch(0.9205 0.0086 225.0878);
+	--input: oklch(0.9205 0.0086 225.0878);
+	--ring: oklch(0.6726 0.2904 341.4084);
+	--chart-1: oklch(0.6726 0.2904 341.4084);
+	--chart-2: oklch(0.5488 0.2944 299.0954);
+	--chart-3: oklch(0.8442 0.1457 209.2851);
+	--chart-4: oklch(0.8903 0.1739 171.269);
+	--chart-5: oklch(0.9168 0.1915 101.407);
+	--radius: 0.5rem;
+	--sidebar: oklch(0.9595 0.02 286.0164);
+	--sidebar-foreground: oklch(0.1649 0.0352 281.8285);
+	--sidebar-primary: oklch(0.6726 0.2904 341.4084);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.8903 0.1739 171.269);
+	--sidebar-accent-foreground: oklch(0.1649 0.0352 281.8285);
+	--sidebar-border: oklch(0.9205 0.0086 225.0878);
+	--sidebar-ring: oklch(0.6726 0.2904 341.4084);
+}
+
+.dark {
+	--background: oklch(0.1649 0.0352 281.8285);
+	--foreground: oklch(0.9513 0.0074 260.7315);
+	--card: oklch(0.2542 0.0611 281.1423);
+	--card-foreground: oklch(0.9513 0.0074 260.7315);
+	--popover: oklch(0.2542 0.0611 281.1423);
+	--popover-foreground: oklch(0.9513 0.0074 260.7315);
+	--secondary: oklch(0.2542 0.0611 281.1423);
+	--secondary-foreground: oklch(0.9513 0.0074 260.7315);
+	--muted: oklch(0.2123 0.0522 280.9917);
+	--muted-foreground: oklch(0.6245 0.05 278.1046);
+	--border: oklch(0.3279 0.0832 280.789);
+	--input: oklch(0.3279 0.0832 280.789);
+	--sidebar: oklch(0.1649 0.0352 281.8285);
+	--sidebar-foreground: oklch(0.9513 0.0074 260.7315);
+	--sidebar-border: oklch(0.3279 0.0832 280.789);
+}
+
+@theme inline {
+	--font-sans: 'Outfit Variable', sans-serif;
+	--font-mono: 'Fira Code Variable', monospace;
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.4);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+	html {
+		@apply font-sans;
+	}
+}

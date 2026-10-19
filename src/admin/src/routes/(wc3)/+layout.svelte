@@ -1,19 +1,22 @@
 <script lang="ts">
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { page } from '$app/state';
+	import * as Alert from '$lib/components/ui/alert';
+	import NavTabs from '$lib/NavTabs.svelte';
 	import { WC3_LINKS, under } from '$lib/nav';
 
 	let { data, children } = $props();
+
+	const links = $derived(WC3_LINKS.map(([href, label]) => ({ href, label, active: under(page.url.pathname, href) })));
 </script>
 
-<nav class="mb-4 flex gap-4 border-b border-zinc-800 pb-2 text-sm">
-	{#each WC3_LINKS as [href, label]}
-		<a {href} class={under(page.url.pathname, href) ? 'text-zinc-100' : 'text-zinc-400 hover:text-zinc-100'}>{label}</a>
-	{/each}
-</nav>
+<NavTabs {links} />
 {#if data.health && data.health.telnet.state !== 'ready'}
-	<div class="mb-4 rounded bg-amber-900/60 px-4 py-2 text-sm text-amber-100">
-		pvpgn offline ({data.health.telnet.error || data.health.telnet.state}) — actions disabled
-	</div>
+	<Alert.Root variant="warning" class="mb-4">
+		<TriangleAlert />
+		<Alert.Title>pvpgn offline — actions disabled</Alert.Title>
+		<Alert.Description>{data.health.telnet.error || data.health.telnet.state}</Alert.Description>
+	</Alert.Root>
 {/if}
 
 {@render children()}

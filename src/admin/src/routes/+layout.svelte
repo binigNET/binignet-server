@@ -1,9 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import { ModeWatcher } from 'mode-watcher';
-	import ConfirmHost from '$lib/ConfirmHost.svelte';
-	import { Toaster } from '$lib/components/ui/sonner';
+	import LogOut from '@lucide/svelte/icons/log-out';
+	import Moon from '@lucide/svelte/icons/moon';
+	import Sun from '@lucide/svelte/icons/sun';
+	import { ModeWatcher, toggleMode } from 'mode-watcher';
 	import { page } from '$app/state';
+	import ConfirmHost from '$lib/ConfirmHost.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Toaster } from '$lib/components/ui/sonner';
 	import { GAME_IDS, HLDS_GAMES } from '$lib/games';
 	import { WC3_LINKS, under } from '$lib/nav';
 
@@ -23,16 +27,24 @@
 <ConfirmHost />
 
 {#if data.authed}
-	<header class="flex items-center gap-6 border-b border-zinc-800 px-4 py-3">
-		<a href="/" class="font-semibold">binignet admin</a>
-		<nav class="flex gap-4 text-sm">
-			{#each tabs as t}
-				<a href={t.href} class={t.active ? 'text-zinc-100' : 'text-zinc-400 hover:text-zinc-100'}>{t.label}</a>
+	<header class="flex items-center gap-2 border-b px-4 py-2">
+		<a href="/" class="mr-2 shrink-0 font-semibold tracking-tight text-primary">binignet admin</a>
+		<nav class="flex min-w-0 gap-1 overflow-x-auto">
+			{#each tabs as t (t.href)}
+				<Button href={t.href} size="sm" variant={t.active ? 'secondary' : 'ghost'} aria-current={t.active ? 'page' : undefined}>
+					{t.label}
+				</Button>
 			{/each}
 		</nav>
-		<form method="POST" action="/logout" class="ml-auto">
-			<button class="text-sm text-zinc-400 hover:text-zinc-100">Log out</button>
-		</form>
+		<div class="ml-auto flex shrink-0 items-center gap-1">
+			<Button size="icon-sm" variant="ghost" onclick={toggleMode} aria-label="Toggle theme">
+				<Sun class="hidden dark:block" />
+				<Moon class="dark:hidden" />
+			</Button>
+			<form method="POST" action="/logout">
+				<Button type="submit" size="sm" variant="ghost"><LogOut /> Log out</Button>
+			</form>
+		</div>
 	</header>
 {/if}
 

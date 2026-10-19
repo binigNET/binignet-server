@@ -1,50 +1,56 @@
 <script lang="ts">
+	import CircleX from '@lucide/svelte/icons/circle-x';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { page } from '$app/state';
+	import * as Alert from '$lib/components/ui/alert';
 	import { HLDS_GAMES } from '$lib/games';
-	import { Spinner } from '$lib/components/ui/spinner';
 	import { latest } from '$lib/latest.svelte';
+	import NavTabs from '$lib/NavTabs.svelte';
 	import { under } from '$lib/nav';
+	import Updating from '$lib/Updating.svelte';
 
 	let { data, children } = $props();
 
 	const base = $derived(`/${data.game}`);
-	const links = $derived([
-		[base, 'Server'],
-		[`${base}/bans`, 'Bans'],
-		[`${base}/settings`, 'Settings'],
-		[`${base}/console`, 'Console'],
-		[`${base}/logs`, 'Logs']
-	] as const);
+	const links = $derived(
+		(
+			[
+				[base, 'Server'],
+				[`${base}/bans`, 'Bans'],
+				[`${base}/settings`, 'Settings'],
+				[`${base}/console`, 'Console'],
+				[`${base}/logs`, 'Logs']
+			] as const
+		).map(([href, label]) => ({
+			href,
+			label,
+			active: href === base ? page.url.pathname === base : under(page.url.pathname, href)
+		}))
+	);
 	const server = latest(() => data.server);
 	const s = $derived(server.value);
 </script>
 
-<nav class="mb-4 flex gap-4 border-b border-zinc-800 pb-2 text-sm">
-	<span class="font-medium">{HLDS_GAMES[data.game].name}</span>
-	{#each links as [href, label]}
-		<a
-			{href}
-			class={(href === base ? page.url.pathname === base : under(page.url.pathname, href))
-				? 'text-zinc-100'
-				: 'text-zinc-400 hover:text-zinc-100'}>{label}</a
-		>
-	{/each}
-	{#if server.pending && s}
-		<span class="ml-auto flex items-center gap-1 text-xs text-zinc-400"><Spinner class="size-3" /> updating…</span>
-	{/if}
-</nav>
-{#if !s}
-	<!-- status still loading: banners appear once it resolves -->
-{:else if !s.info}
-	<div class="mb-4 rounded bg-red-900/60 px-4 py-2 text-sm text-red-100">server offline ({s.error})</div>
-{:else if s.rcon.state !== 'ok'}
-	<div class="mb-4 rounded bg-amber-900/60 px-4 py-2 text-sm text-amber-100">
+<NavTabs {links} label={HLDS_GAMES[data.game].name}>
+	{#snippet end()}<Updating show={server.pending && !!s} />{/snippet}
+</NavTabs>
+<!-- banners appear once the (streamed) status resolves -->
+{#if s && !s.info}
+	<Alert.Root variant="destructive" class="mb-4">
+		<CircleX />
+		<Alert.Title>Server offline</Alert.Title>
+		<Alert.Description>{s.error}</Alert.Description>
+	</Alert.Root>
+{:else if s && s.rcon.state !== 'ok'}
+	<Alert.Root variant="warning" class="mb-4">
+		<TriangleAlert />
 		{#if s.rcon.state === 'nopass'}
-			rcon password not set — actions disabled
+			<Alert.Title>rcon password not set — actions disabled</Alert.Title>
 		{:else}
-			rcon {s.rcon.state} ({s.rcon.error}) — actions may fail
+			<Alert.Title>rcon {s.rcon.state} — actions may fail</Alert.Title>
+			<Alert.Description>{s.rcon.error}</Alert.Description>
 		{/if}
-	</div>
+	</Alert.Root>
 {/if}
 
 {@render children()}

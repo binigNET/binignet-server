@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { submit } from '$lib/submit';
 	import { Button } from '$lib/components/ui/button';
-	import { button, input, small } from '$lib/styles';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
+	import { submit } from '$lib/submit';
 
 	let { data } = $props();
 	const mb = (n: number) => (n / 1024 / 1024).toFixed(1) + ' MB';
@@ -9,62 +11,59 @@
 	const COLORS = ['Red', 'Blue', 'Teal', 'Purple', 'Yellow', 'Orange', 'Green', 'Pink', 'Gray', 'Light Blue', 'Dark Green', 'Brown'];
 </script>
 
-<h1 class="mb-4 text-xl font-semibold">Saves <span class="text-sm font-normal text-zinc-400">{data.saves.length} in aura/data/saves</span></h1>
+<h1 class="mb-4 text-xl font-semibold">Saves <span class="text-sm font-normal text-muted-foreground">{data.saves.length} in aura/data/saves</span></h1>
 
-<section class="mb-6">
-	<form method="POST" action="?/upload" enctype="multipart/form-data" use:submit class="flex flex-wrap items-center gap-2">
-		<input type="file" name="file" accept=".w3z" required class="text-sm" />
-		<button class={button}>Upload</button>
-		<span class="text-xs text-zinc-400">.w3z from a player's Warcraft III\save\Multiplayer, max {mb(data.maxBytes)}. Keep the original file name.</span>
-	</form>
-</section>
+<form method="POST" action="?/upload" enctype="multipart/form-data" use:submit class="mb-6 flex flex-wrap items-center gap-2">
+	<Input type="file" name="file" accept=".w3z" required class="w-auto" />
+	<Button type="submit">Upload</Button>
+	<span class="text-xs text-muted-foreground">.w3z from a player's Warcraft III\save\Multiplayer, max {mb(data.maxBytes)}. Keep the original file name.</span>
+</form>
 
 <datalist id="accounts">{#each data.accounts as a}<option value={a}></option>{/each}</datalist>
 
 <div class="space-y-4">
 	{#each data.saves as s (s.name)}
-		<section class="max-w-3xl rounded border border-zinc-800 p-4">
-			<div class="mb-2 flex flex-wrap items-baseline gap-3">
-				<h2 class="font-medium">{s.name}</h2>
-				<span class="text-xs text-zinc-400">{mb(s.size)} · {new Date(s.mtime).toLocaleDateString()}</span>
-				<form method="POST" action="?/delete" class="ml-auto" use:submit={{ confirm: { title: `Delete ${s.name}?`, destructive: true } }}>
-					<input type="hidden" name="name" value={s.name} /><button class="{small} text-red-400">Delete</button>
-				</form>
-			</div>
-			{#if !s.info}
-				<p class="text-sm text-red-400">Unreadable save: {s.error}</p>
-			{:else}
-				<p class="mb-3 text-sm text-zinc-400">
-					Map {s.info.mapFile}
-					{#if !s.map}— <span class="text-amber-400">not uploaded</span>, add it on the <a href="/maps" class="underline">Maps</a> page first{/if}
-				</p>
-				<form
-					method="POST"
-					action="?/host"
-					use:submit={{ reset: false }}
-					class="space-y-2"
-				>
-					<input type="hidden" name="save" value={s.name} />
-					<input name="name" maxlength="30" value={s.info.gameName.slice(0, 30)} placeholder="Game name" class="{input} w-64" />
-					<table class="text-sm">
-						<thead class="text-zinc-400"><tr><th class="pr-4 text-left">Slot</th><th class="pr-4 text-left">Team</th><th class="pr-4 text-left">Race</th><th class="text-left">Player</th></tr></thead>
-						<tbody>
-							{#each s.info.slots.filter((x) => x.human) as slot}
-								<tr>
-									<td class="pr-4">{COLORS[slot.color] ?? `#${slot.color + 1}`}</td>
-									<td class="pr-4">{slot.team + 1}</td>
-									<td class="pr-4">{slot.race}</td>
-									<td class="py-1"><input name="player" list="accounts" required maxlength="15" class="{input} w-48 py-1" /></td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-					<Button type="submit" disabled={!s.map} loadingText="Hosting… (loading map)">Load</Button>
-					<p class="text-xs text-zinc-400">Players must still have this save in their own Save\Multiplayer folder. Lobby auto-starts once all join; the save is deleted here after hosting.</p>
-				</form>
-			{/if}
-		</section>
+		<Card.Root class="max-w-3xl">
+			<Card.Header>
+				<Card.Title>{s.name}</Card.Title>
+				<Card.Description>{mb(s.size)} · {new Date(s.mtime).toLocaleDateString()}</Card.Description>
+				<Card.Action>
+					<form method="POST" action="?/delete" use:submit={{ confirm: { title: `Delete ${s.name}?`, destructive: true } }}>
+						<input type="hidden" name="name" value={s.name} /><Button type="submit" size="sm" variant="destructive">Delete</Button>
+					</form>
+				</Card.Action>
+			</Card.Header>
+			<Card.Content>
+				{#if !s.info}
+					<p class="text-sm text-destructive">Unreadable save: {s.error}</p>
+				{:else}
+					<p class="mb-3 text-sm text-muted-foreground">
+						Map <span class="font-mono">{s.info.mapFile}</span>
+						{#if !s.map}— <span class="text-warning">not uploaded</span>, add it on the <a href="/maps" class="underline">Maps</a> page first{/if}
+					</p>
+					<form method="POST" action="?/host" use:submit={{ reset: false }} class="space-y-2">
+						<input type="hidden" name="save" value={s.name} />
+						<Input name="name" maxlength={30} value={s.info.gameName.slice(0, 30)} placeholder="Game name" class="w-64" />
+						<Table.Root class="w-auto">
+							<Table.Header><Table.Row><Table.Head>Slot</Table.Head><Table.Head>Team</Table.Head><Table.Head>Race</Table.Head><Table.Head>Player</Table.Head></Table.Row></Table.Header>
+							<Table.Body>
+								{#each s.info.slots.filter((x) => x.human) as slot}
+									<Table.Row>
+										<Table.Cell>{COLORS[slot.color] ?? `#${slot.color + 1}`}</Table.Cell>
+										<Table.Cell>{slot.team + 1}</Table.Cell>
+										<Table.Cell>{slot.race}</Table.Cell>
+										<Table.Cell><Input name="player" list="accounts" required maxlength={15} class="h-7 w-48" /></Table.Cell>
+									</Table.Row>
+								{/each}
+							</Table.Body>
+						</Table.Root>
+						<Button type="submit" disabled={!s.map} loadingText="Hosting… (loading map)">Load</Button>
+						<p class="text-xs text-muted-foreground">Players must still have this save in their own Save\Multiplayer folder. Lobby auto-starts once all join; the save is deleted here after hosting.</p>
+					</form>
+				{/if}
+			</Card.Content>
+		</Card.Root>
 	{:else}
-		<p class="text-sm text-zinc-400">No saves uploaded.</p>
+		<p class="text-sm text-muted-foreground">No saves uploaded.</p>
 	{/each}
 </div>

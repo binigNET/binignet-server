@@ -27,9 +27,9 @@
 <ConfirmHost />
 
 {#if data.authed}
-	<header class="flex items-center gap-2 border-b px-4 py-2">
+	<header class="flex flex-wrap items-center gap-2 border-b px-4 py-2">
 		<a href="/" class="mr-2 shrink-0 font-semibold tracking-tight text-primary">binignet admin</a>
-		<nav class="flex min-w-0 gap-1 overflow-x-auto">
+		<nav class="order-last flex w-full min-w-0 gap-1 overflow-x-auto sm:order-none sm:w-auto">
 			{#each tabs as t (t.href)}
 				<Button href={t.href} size="sm" variant={t.active ? 'secondary' : 'ghost'} aria-current={t.active ? 'page' : undefined}>
 					{t.label}
@@ -42,7 +42,7 @@
 				<Moon class="dark:hidden" />
 			</Button>
 			<form method="POST" action="/logout">
-				<Button type="submit" size="sm" variant="ghost"><LogOut /> Log out</Button>
+				<Button type="submit" size="sm" variant="ghost" aria-label="Log out"><LogOut /> <span class="hidden sm:inline">Log out</span></Button>
 			</form>
 		</div>
 	</header>

@@ -1,74 +1,81 @@
 <script lang="ts">
-	import { submit } from '$lib/submit';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
 	import DurationReason from '$lib/DurationReason.svelte';
 	import { until } from '$lib/format';
-	import { button, input, small } from '$lib/styles';
+	import { submit } from '$lib/submit';
 
 	let { data } = $props();
 </script>
 
 <h1 class="mb-4 text-xl font-semibold">Bans</h1>
 
-<section class="mb-8">
-	<h2 class="mb-2 font-medium">IP bans</h2>
-	<form method="POST" action="?/ipban" use:submit class="mb-3 flex flex-wrap gap-2">
-		<input name="ip" required placeholder="IP, e.g. 1.2.3.4 or 1.2.*.*" class="{input} w-56 font-mono" />
-		<input name="minutes" type="number" min="0" value="0" title="minutes, 0 = permanent" class="{input} w-28" />
-		<span class="self-center text-xs text-zinc-400">min (0 = permanent)</span>
-		<button class={button}>Ban IP</button>
-	</form>
-	{#if data.ips === null}
-		<p class="text-sm text-red-400">Can't read bnban.conf.</p>
-	{:else if !data.ips.length}
-		<p class="text-sm text-zinc-400">None.</p>
-	{:else}
-		<table class="w-full text-left text-sm">
-			<thead class="text-zinc-400"><tr><th class="py-2">IP / range</th><th>Until</th><th></th></tr></thead>
-			<tbody>
-				{#each data.ips as b (b.ip)}
-					<tr class="border-t border-zinc-800">
-						<td class="py-2 font-mono">{b.ip}</td>
-						<td>{until(b.until)}</td>
-						<td class="text-right">
-							<form method="POST" action="?/ipunban" use:submit>
-								<input type="hidden" name="ip" value={b.ip} /><button class={small}>Unban</button>
-							</form>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	{/if}
-</section>
+<Card.Root class="mb-6">
+	<Card.Header><Card.Title>IP bans</Card.Title></Card.Header>
+	<Card.Content class="space-y-3">
+		<form method="POST" action="?/ipban" use:submit class="flex flex-wrap gap-2">
+			<Input name="ip" required placeholder="IP, e.g. 1.2.3.4 or 1.2.*.*" class="w-56 font-mono" />
+			<Input name="minutes" type="number" min={0} value={0} title="minutes, 0 = permanent" class="w-28" />
+			<span class="self-center text-xs text-muted-foreground">min (0 = permanent)</span>
+			<Button type="submit">Ban IP</Button>
+		</form>
+		{#if data.ips === null}
+			<p class="text-sm text-destructive">Can't read bnban.conf.</p>
+		{:else if !data.ips.length}
+			<p class="text-sm text-muted-foreground">None.</p>
+		{:else}
+			<Table.Root>
+				<Table.Header><Table.Row><Table.Head>IP / range</Table.Head><Table.Head>Until</Table.Head><Table.Head></Table.Head></Table.Row></Table.Header>
+				<Table.Body>
+					{#each data.ips as b (b.ip)}
+						<Table.Row>
+							<Table.Cell class="font-mono">{b.ip}</Table.Cell>
+							<Table.Cell>{until(b.until)}</Table.Cell>
+							<Table.Cell class="text-right">
+								<form method="POST" action="?/ipunban" use:submit>
+									<input type="hidden" name="ip" value={b.ip} /><Button type="submit" size="sm" variant="outline">Unban</Button>
+								</form>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{/if}
+	</Card.Content>
+</Card.Root>
 
 {#each [['lock', 'unlock', 'Locked accounts', 'Lock', 'Unlock', data.locked], ['mute', 'unmute', 'Muted accounts', 'Mute', 'Unmute', data.muted]] as const as [name, undo, title, verb, undoVerb, rows]}
-	<section class="mb-8">
-		<h2 class="mb-2 font-medium">{title}</h2>
-		<form method="POST" action="?/{name}" use:submit class="mb-3 flex flex-wrap gap-2">
-			<input name="user" required placeholder="Account" class="{input} w-40" />
-			<DurationReason />
-			<button class={button}>{verb}</button>
-		</form>
-		{#if rows === null}
-			<p class="text-sm text-red-400">Database unreachable.</p>
-		{:else if !rows.length}
-			<p class="text-sm text-zinc-400">None.</p>
-		{:else}
-			<table class="w-full text-left text-sm">
-				<thead class="text-zinc-400"><tr><th class="py-2">Account</th><th>Until</th><th>Reason</th><th></th></tr></thead>
-				<tbody>
-					{#each rows as b (b.username)}
-						<tr class="border-t border-zinc-800">
-							<td class="py-2">{b.username}</td><td>{until(b.until)}</td><td>{b.reason || '—'}</td>
-							<td class="text-right">
-								<form method="POST" action="?/{undo}" use:submit>
-									<input type="hidden" name="user" value={b.username} /><button class={small}>{undoVerb}</button>
-								</form>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-	</section>
+	<Card.Root class="mb-6">
+		<Card.Header><Card.Title>{title}</Card.Title></Card.Header>
+		<Card.Content class="space-y-3">
+			<form method="POST" action="?/{name}" use:submit class="flex flex-wrap gap-2">
+				<Input name="user" required placeholder="Account" class="w-40" />
+				<DurationReason />
+				<Button type="submit">{verb}</Button>
+			</form>
+			{#if rows === null}
+				<p class="text-sm text-destructive">Database unreachable.</p>
+			{:else if !rows.length}
+				<p class="text-sm text-muted-foreground">None.</p>
+			{:else}
+				<Table.Root>
+					<Table.Header><Table.Row><Table.Head>Account</Table.Head><Table.Head>Until</Table.Head><Table.Head>Reason</Table.Head><Table.Head></Table.Head></Table.Row></Table.Header>
+					<Table.Body>
+						{#each rows as b (b.username)}
+							<Table.Row>
+								<Table.Cell>{b.username}</Table.Cell><Table.Cell>{until(b.until)}</Table.Cell><Table.Cell>{b.reason || '—'}</Table.Cell>
+								<Table.Cell class="text-right">
+									<form method="POST" action="?/{undo}" use:submit>
+										<input type="hidden" name="user" value={b.username} /><Button type="submit" size="sm" variant="outline">{undoVerb}</Button>
+									</form>
+								</Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
+			{/if}
+		</Card.Content>
+	</Card.Root>
 {/each}

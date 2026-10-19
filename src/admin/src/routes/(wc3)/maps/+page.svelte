@@ -1,51 +1,53 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
 	import { submit } from '$lib/submit';
-	import { button, input, small } from '$lib/styles';
 
 	let { data } = $props();
 	let editing = $state<string | null>(null);
 	const mb = (n: number) => (n / 1024 / 1024).toFixed(1) + ' MB';
 </script>
 
-<h1 class="mb-4 text-xl font-semibold">Maps <span class="text-sm font-normal text-zinc-400">{data.maps.length} in aura/data/maps</span></h1>
+<h1 class="mb-4 text-xl font-semibold">Maps <span class="text-sm font-normal text-muted-foreground">{data.maps.length} in aura/data/maps</span></h1>
 
-<section class="mb-6">
-	<form method="POST" action="?/upload" enctype="multipart/form-data" use:submit class="flex flex-wrap items-center gap-2">
-		<input type="file" name="file" accept=".w3x,.w3m" required class="text-sm" />
-		<button class={button}>Upload</button>
-		<span class="text-xs text-zinc-400">.w3x / .w3m, max {mb(data.maxBytes)}</span>
-	</form>
-</section>
+<form method="POST" action="?/upload" enctype="multipart/form-data" use:submit class="mb-6 flex flex-wrap items-center gap-2">
+	<Input type="file" name="file" accept=".w3x,.w3m" required class="w-auto" />
+	<Button type="submit">Upload</Button>
+	<span class="text-xs text-muted-foreground">.w3x / .w3m, max {mb(data.maxBytes)}</span>
+</form>
 
-<table class="w-full text-left text-sm">
-	<thead class="text-zinc-400"><tr><th class="py-2">File</th><th>Size</th><th>Added</th><th></th></tr></thead>
-	<tbody>
+<Table.Root>
+	<Table.Header><Table.Row><Table.Head>File</Table.Head><Table.Head>Size</Table.Head><Table.Head>Added</Table.Head><Table.Head></Table.Head></Table.Row></Table.Header>
+	<Table.Body>
 		{#each data.maps as m (m.name)}
-			<tr class="border-t border-zinc-800 align-top">
-				<td class="py-2">
+			<Table.Row>
+				<Table.Cell class="whitespace-normal">
 					{#if editing === m.name}
 						<form method="POST" action="?/rename" use:submit={{ onResult: (r) => r.type === 'success' && (editing = null) }} class="flex gap-2">
 							<input type="hidden" name="from" value={m.name} />
-							<input name="to" value={m.name} required class="{input} flex-1 py-1" />
-							<button class={small}>Save</button>
-							<button type="button" class={small} onclick={() => (editing = null)}>Cancel</button>
+							<Input name="to" value={m.name} required class="h-7 flex-1" />
+							<Button type="submit" size="sm">Save</Button>
+							<Button size="sm" variant="outline" onclick={() => (editing = null)}>Cancel</Button>
 						</form>
 					{:else}
 						{m.name}
 					{/if}
-				</td>
-				<td class="py-2 whitespace-nowrap">{mb(m.size)}</td>
-				<td class="py-2 whitespace-nowrap">{new Date(m.mtime).toLocaleDateString()}</td>
-				<td class="py-2 text-right whitespace-nowrap">
+				</Table.Cell>
+				<Table.Cell>{mb(m.size)}</Table.Cell>
+				<Table.Cell>{new Date(m.mtime).toLocaleDateString()}</Table.Cell>
+				<Table.Cell>
 					{#if editing !== m.name}
-						{#if !m.name.includes(',')}<a href="/games?map={encodeURIComponent(m.name)}" class={small}>Host</a>{/if}
-						<button class={small} onclick={() => (editing = m.name)}>Rename</button>
-						<form method="POST" action="?/delete" class="inline" use:submit={{ confirm: { title: `Delete ${m.name}?`, destructive: true } }}>
-							<input type="hidden" name="name" value={m.name} /><button class="{small} text-red-400">Delete</button>
-						</form>
+						<div class="flex justify-end gap-1">
+							{#if !m.name.includes(',')}<Button href="/games?map={encodeURIComponent(m.name)}" size="sm" variant="outline">Host</Button>{/if}
+							<Button size="sm" variant="outline" onclick={() => (editing = m.name)}>Rename</Button>
+							<form method="POST" action="?/delete" use:submit={{ confirm: { title: `Delete ${m.name}?`, destructive: true } }}>
+								<input type="hidden" name="name" value={m.name} /><Button type="submit" size="sm" variant="destructive">Delete</Button>
+							</form>
+						</div>
 					{/if}
-				</td>
-			</tr>
+				</Table.Cell>
+			</Table.Row>
 		{/each}
-	</tbody>
-</table>
+	</Table.Body>
+</Table.Root>

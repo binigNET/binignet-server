@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import * as Table from '$lib/components/ui/table';
 	import { GAME_IDS, HLDS_GAMES } from '$lib/games';
 	import { latest } from '$lib/latest.svelte';
 
@@ -26,23 +28,25 @@
 </script>
 
 <h1 class="mb-4 text-xl font-semibold">Overview</h1>
-<table class="w-full text-sm">
-	<tbody>
+<Table.Root>
+	<Table.Body>
 		{#each rows as [name, ok, detail]}
-			<tr class="border-b border-zinc-800">
-				<td class="py-2">{name}</td>
-				<td class="py-2"><span class={ok ? 'text-emerald-400' : 'text-red-400'}>{ok ? 'ok' : 'down'}</span></td>
-				<td class="py-2 text-zinc-400">{detail}</td>
-			</tr>
+			<Table.Row>
+				<Table.Cell class="font-medium">{name}</Table.Cell>
+				<Table.Cell>
+					<Badge class={ok ? 'bg-success text-success-foreground' : ''} variant={ok ? 'default' : 'destructive'}>{ok ? 'ok' : 'down'}</Badge>
+				</Table.Cell>
+				<Table.Cell class="whitespace-normal text-muted-foreground">{detail}</Table.Cell>
+			</Table.Row>
 		{/each}
 		{#if !servers.value}
 			{#each GAME_IDS as g (g)}
-				<tr class="border-b border-zinc-800">
-					<td class="py-2"><Skeleton class="h-4 w-32" /></td>
-					<td class="py-2"><Skeleton class="h-4 w-10" /></td>
-					<td class="py-2"><Skeleton class="h-4 w-48" /></td>
-				</tr>
+				<Table.Row>
+					<Table.Cell><Skeleton class="h-4 w-32" /></Table.Cell>
+					<Table.Cell><Skeleton class="h-4 w-10" /></Table.Cell>
+					<Table.Cell><Skeleton class="h-4 w-48" /></Table.Cell>
+				</Table.Row>
 			{/each}
 		{/if}
-	</tbody>
-</table>
+	</Table.Body>
+</Table.Root>

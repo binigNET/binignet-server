@@ -1,11 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { submit } from '$lib/submit';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as NativeSelect from '$lib/components/ui/native-select';
+	import * as Table from '$lib/components/ui/table';
 	import DurationReason from '$lib/DurationReason.svelte';
 	import { localDateTime, until } from '$lib/format';
 	import { findIcon, iconSrc, RACES } from '$lib/icons';
-	import { button, input, small } from '$lib/styles';
+	import { submit } from '$lib/submit';
+	import { cn } from '$lib/utils';
 
 	let { data } = $props();
 	let mounted = $state(false);
@@ -47,185 +53,195 @@
 	);
 </script>
 
-<a href="/players" class="text-sm text-zinc-400 hover:text-zinc-100">← Players</a>
+<Button href="/players" size="sm" variant="ghost" class="-ml-2"><ArrowLeft /> Players</Button>
 <h1 class="mt-2 mb-4 flex flex-wrap items-center gap-3 text-xl font-semibold">
 	{#if saved}<img src={iconSrc(saved.code)} alt={saved.name} title={saved.name} class="h-8 rounded-sm" />{/if}
 	{p.username}
-	<span class="rounded bg-amber-400/15 px-2 py-0.5 text-sm font-medium text-amber-300">Lv {level}</span>
-	{#if data.deleted}
-		<span class="rounded bg-red-500/15 px-2 py-0.5 text-sm font-medium text-red-300">Deleted</span>
-	{/if}
+	<Badge class="bg-warning text-warning-foreground">Lv {level}</Badge>
+	{#if data.deleted}<Badge variant="destructive">Deleted</Badge>{/if}
 	{#if data.online}
-		<span class="rounded bg-emerald-500/15 px-2 py-0.5 text-sm font-medium text-emerald-300">Online</span>
+		<Badge class="bg-success text-success-foreground">Online</Badge>
 	{:else}
-		<span class="rounded bg-zinc-700/50 px-2 py-0.5 text-sm font-medium text-zinc-400">Offline</span>
+		<Badge variant="secondary">Offline</Badge>
 	{/if}
-	<span class="text-sm font-normal text-zinc-400">uid {p.uid}</span>
+	<span class="text-sm font-normal text-muted-foreground">uid {p.uid}</span>
 </h1>
 
-<section class="mb-8 grid max-w-3xl gap-x-8 gap-y-6 rounded border border-zinc-800 p-4 text-sm sm:grid-cols-2">
-	<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-		<dt class="text-zinc-400">Email</dt>
-		<dd>{d.email ?? '—'}{#if d.email}<span class="ml-2 text-xs {d.emailVerified ? 'text-emerald-400' : 'text-zinc-500'}">{d.emailVerified ? 'verified' : 'unverified'}</span>{/if}</dd>
-		<dt class="text-zinc-400">Created</dt>
-		<dd>{when(d.created)}</dd>
-		<dt class="text-zinc-400">Last login</dt>
-		<dd>{when(d.lastLogin)}{#if d.lastClient}<span class="ml-2 text-zinc-500">{d.lastClient}</span>{/if}</dd>
-		<dt class="text-zinc-400">Last IP</dt>
-		<dd class="font-mono text-xs leading-5">{d.lastIp ?? '—'}</dd>
-		<dt class="text-zinc-400">Last owner</dt>
-		<dd>{d.lastOwner ?? '—'}</dd>
-		{#if data.online}
-			<dt class="text-zinc-400">Country</dt>
-			<dd>{data.online.country ?? '—'}</dd>
-			<dt class="text-zinc-400">Client</dt>
-			<dd>{data.online.clienttag} <span class="text-zinc-500">{data.online.version}</span></dd>
-			<dt class="text-zinc-400">In game</dt>
-			<dd>{data.online.game ?? '—'}</dd>
-		{/if}
-	</dl>
-	<div class="space-y-4">
+<Card.Root class="mb-6 max-w-3xl">
+	<Card.Content class="grid gap-x-8 gap-y-6 text-sm sm:grid-cols-2">
 		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-			<dt class="text-zinc-400">Roles</dt>
-			<dd>{[d.admin && 'admin', d.operator && 'operator'].filter(Boolean).join(', ') || '—'}</dd>
-			<dt class="text-zinc-400">Cmd groups</dt>
-			<dd>{d.commandGroups ?? '—'}</dd>
-			<dt class="text-zinc-400">Locked</dt>
-			<dd class={d.locked ? 'text-red-400' : ''}>{d.locked ? `until ${until(d.lockUntil)}${d.lockReason ? ` — ${d.lockReason}` : ''}` : 'no'}</dd>
-			<dt class="text-zinc-400">Muted</dt>
-			<dd class={d.muted ? 'text-red-400' : ''}>{d.muted ? `until ${until(d.muteUntil)}${d.muteReason ? ` — ${d.muteReason}` : ''}` : 'no'}</dd>
-			{#each profile as [k, v]}
-				<dt class="text-zinc-400">{k}</dt>
-				<dd class="break-words">{v}</dd>
-			{/each}
+			<dt class="text-muted-foreground">Email</dt>
+			<dd>{d.email ?? '—'}{#if d.email}<span class="ml-2 text-xs {d.emailVerified ? 'text-success' : 'text-muted-foreground'}">{d.emailVerified ? 'verified' : 'unverified'}</span>{/if}</dd>
+			<dt class="text-muted-foreground">Created</dt>
+			<dd>{when(d.created)}</dd>
+			<dt class="text-muted-foreground">Last login</dt>
+			<dd>{when(d.lastLogin)}{#if d.lastClient}<span class="ml-2 text-muted-foreground">{d.lastClient}</span>{/if}</dd>
+			<dt class="text-muted-foreground">Last IP</dt>
+			<dd class="font-mono text-xs leading-5">{d.lastIp ?? '—'}</dd>
+			<dt class="text-muted-foreground">Last owner</dt>
+			<dd>{d.lastOwner ?? '—'}</dd>
+			{#if data.online}
+				<dt class="text-muted-foreground">Country</dt>
+				<dd>{data.online.country ?? '—'}</dd>
+				<dt class="text-muted-foreground">Client</dt>
+				<dd>{data.online.clienttag} <span class="text-muted-foreground">{data.online.version}</span></dd>
+				<dt class="text-muted-foreground">In game</dt>
+				<dd>{data.online.game ?? '—'}</dd>
+			{/if}
 		</dl>
-		<table class="text-xs">
-			<thead class="text-zinc-400"><tr><th class="pr-4 text-left">Race</th><th class="pr-3 text-right">W</th><th class="text-right">L</th></tr></thead>
-			<tbody>
-				{#each Object.entries(d.races) as [k, v]}
-					<tr><td class="pr-4">{raceLabel[k as keyof typeof raceLabel]}</td><td class="pr-3 text-right">{v.wins}</td><td class="text-right">{v.losses}</td></tr>
+		<div class="space-y-4">
+			<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+				<dt class="text-muted-foreground">Roles</dt>
+				<dd>{[d.admin && 'admin', d.operator && 'operator'].filter(Boolean).join(', ') || '—'}</dd>
+				<dt class="text-muted-foreground">Cmd groups</dt>
+				<dd>{d.commandGroups ?? '—'}</dd>
+				<dt class="text-muted-foreground">Locked</dt>
+				<dd class={d.locked ? 'text-destructive' : ''}>{d.locked ? `until ${until(d.lockUntil)}${d.lockReason ? ` — ${d.lockReason}` : ''}` : 'no'}</dd>
+				<dt class="text-muted-foreground">Muted</dt>
+				<dd class={d.muted ? 'text-destructive' : ''}>{d.muted ? `until ${until(d.muteUntil)}${d.muteReason ? ` — ${d.muteReason}` : ''}` : 'no'}</dd>
+				{#each profile as [k, v]}
+					<dt class="text-muted-foreground">{k}</dt>
+					<dd class="break-words">{v}</dd>
 				{/each}
-			</tbody>
-		</table>
-	</div>
-</section>
+			</dl>
+			<table class="text-xs">
+				<thead class="text-muted-foreground"><tr><th class="pr-4 text-left">Race</th><th class="pr-3 text-right">W</th><th class="text-right">L</th></tr></thead>
+				<tbody>
+					{#each Object.entries(d.races) as [k, v]}
+						<tr><td class="pr-4">{raceLabel[k as keyof typeof raceLabel]}</td><td class="pr-3 text-right">{v.wins}</td><td class="text-right">{v.losses}</td></tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	</Card.Content>
+</Card.Root>
 
 <form method="POST" action="?/save" use:submit={{ reset: false }}>
-	<h2 class="mb-2 flex items-center gap-3 font-medium">
-		WC3 TFT ladder
-		<button
-			type="button"
-			class={small}
-			title="Fill inputs only; review then Save"
-			onclick={() => (stats = Object.fromEntries(data.ladders.flatMap((l) => data.fields.map((f) => [`${l}_${f}`, data.max[f]]))) as typeof stats)}
-		>Max all</button>
-	</h2>
-	<table class="mb-6 text-sm">
-		<thead class="text-zinc-400">
-			<tr><th class="pr-4 text-left"></th>{#each data.fields as f}<th class="px-1 text-left capitalize">{f}</th>{/each}</tr>
-		</thead>
-		<tbody>
-			{#each data.ladders as l}
-				<tr>
-					<td class="pr-4 py-1 capitalize">{l}</td>
-					{#each data.fields as f}
-						<td class="px-1 py-1">
-							<input type="number" min="0" name="{l}_{f}" bind:value={stats[`${l}_${f}`]} class="{input} w-24 py-1" />
-						</td>
+	<Card.Root class="mb-6 max-w-3xl">
+		<Card.Header>
+			<Card.Title>WC3 TFT ladder</Card.Title>
+			<Card.Description>Arranged team (AT) stats are per team and not editable here.</Card.Description>
+			<Card.Action>
+				<Button
+					size="sm"
+					variant="outline"
+					title="Fill inputs only; review then Save"
+					onclick={() => (stats = Object.fromEntries(data.ladders.flatMap((l) => data.fields.map((f) => [`${l}_${f}`, data.max[f]]))) as typeof stats)}
+				>Max all</Button>
+			</Card.Action>
+		</Card.Header>
+		<Card.Content>
+			<Table.Root class="w-auto">
+				<Table.Header>
+					<Table.Row><Table.Head></Table.Head>{#each data.fields as f}<Table.Head class="capitalize">{f}</Table.Head>{/each}</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.ladders as l}
+						<Table.Row>
+							<Table.Cell class="capitalize">{l}</Table.Cell>
+							{#each data.fields as f}
+								<Table.Cell>
+									<Input type="number" min={0} name="{l}_{f}" bind:value={stats[`${l}_${f}`]} class="h-7 w-24" />
+								</Table.Cell>
+							{/each}
+						</Table.Row>
 					{/each}
-				</tr>
-			{/each}
-		</tbody>
-	</table>
-	<p class="-mt-4 mb-6 text-xs text-zinc-400">Arranged team (AT) stats are per team and not editable here.</p>
+				</Table.Body>
+			</Table.Root>
+		</Card.Content>
+	</Card.Root>
 
-	<h2 class="mb-2 flex items-center gap-2 font-medium">
-		Icon
-		{#if current}
-			<img src={iconSrc(current.code)} alt="" class="h-6 rounded-sm" />
-			<span class="text-sm font-normal text-zinc-400">{current.name} ({current.code})</span>
-		{:else}
-			<span class="text-sm font-normal text-zinc-400">{icon ? `${icon} (custom)` : 'Auto (rank by level)'}</span>
-		{/if}
-	</h2>
-	<input type="hidden" name="icon" value={icon} />
-	<div class="mb-2 flex flex-wrap gap-1">
-		<button type="button" class="{small} {icon === '' ? 'border-zinc-300 bg-zinc-800' : ''}" onclick={() => (icon = '')}>Auto (rank by level)</button>
-		<span class="mx-1 border-l border-zinc-700"></span>
-		{#each RACES as r}
-			<button type="button" class="{small} {tab === r.key ? 'border-zinc-300 bg-zinc-800' : ''}" onclick={() => (tab = r.key)}>{r.label}</button>
-		{/each}
-	</div>
-	<div class="mb-1 grid max-w-2xl grid-cols-3 gap-2 sm:grid-cols-6">
-		{#each RACES.find((r) => r.key === tab)?.icons ?? [] as i}
-			<button
-				type="button"
-				aria-pressed={icon === i.code}
-				onclick={() => (icon = i.code)}
-				class="flex flex-col items-center gap-1 rounded border p-2 text-xs {icon === i.code ? 'border-amber-400 bg-zinc-800' : 'border-zinc-700 hover:bg-zinc-800'}"
-			>
-				<img src={iconSrc(i.code)} alt="" class="h-[42px] w-16 rounded-sm" />
-				<span class="text-center leading-tight">{i.name}</span>
-				<span class="text-zinc-500">{i.code}</span>
-			</button>
-		{/each}
-	</div>
-	<p class="mb-6 text-xs text-zinc-400">Sets Record\W3XP\userselected_icon; overrides rank icon. Player must rejoin channel / relog to see change.</p>
+	<Card.Root class="mb-6 max-w-3xl">
+		<Card.Header>
+			<Card.Title class="flex items-center gap-2">
+				Icon
+				{#if current}
+					<img src={iconSrc(current.code)} alt="" class="h-6 rounded-sm" />
+					<span class="text-sm font-normal text-muted-foreground">{current.name} ({current.code})</span>
+				{:else}
+					<span class="text-sm font-normal text-muted-foreground">{icon ? `${icon} (custom)` : 'Auto (rank by level)'}</span>
+				{/if}
+			</Card.Title>
+			<Card.Description>Sets Record\W3XP\userselected_icon; overrides rank icon. Player must rejoin channel / relog to see change.</Card.Description>
+		</Card.Header>
+		<Card.Content>
+			<input type="hidden" name="icon" value={icon} />
+			<div class="mb-2 flex flex-wrap gap-1">
+				<Button size="sm" variant={icon === '' ? 'secondary' : 'outline'} onclick={() => (icon = '')}>Auto (rank by level)</Button>
+				<span class="mx-1 border-l"></span>
+				{#each RACES as r}
+					<Button size="sm" variant={tab === r.key ? 'secondary' : 'outline'} onclick={() => (tab = r.key)}>{r.label}</Button>
+				{/each}
+			</div>
+			<div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
+				{#each RACES.find((r) => r.key === tab)?.icons ?? [] as i}
+					<button
+						type="button"
+						aria-pressed={icon === i.code}
+						onclick={() => (icon = i.code)}
+						class={cn(
+							'flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition-colors',
+							icon === i.code ? 'border-primary bg-primary/10' : 'hover:bg-muted'
+						)}
+					>
+						<img src={iconSrc(i.code)} alt="" class="h-[42px] w-16 rounded-sm" />
+						<span class="text-center leading-tight">{i.name}</span>
+						<span class="text-muted-foreground">{i.code}</span>
+					</button>
+				{/each}
+			</div>
+		</Card.Content>
+	</Card.Root>
 
 	<Button type="submit" loadingText="Saving… (pvpgn rate limit, ~1s per change)">Save changes</Button>
 </form>
 
-<section class="mt-10 max-w-3xl space-y-6">
-	<h2 class="font-medium">Actions</h2>
+<Card.Root class="mt-8 max-w-3xl">
+	<Card.Header><Card.Title>Actions</Card.Title></Card.Header>
+	<Card.Content class="space-y-4">
+		{#if data.online}
+			<form method="POST" action="?/kick" use:submit class="flex flex-wrap items-center gap-2">
+				<span class="w-20 text-sm text-muted-foreground">Kick</span>
+				<NativeSelect.Root name="minutes" class="w-40">
+					{#each KICK_BANS as [m, label]}<NativeSelect.Option value={m}>{label}</NativeSelect.Option>{/each}
+				</NativeSelect.Root>
+				<Button type="submit">Kick</Button>
+			</form>
+		{/if}
 
-	{#if data.online}
-		<form method="POST" action="?/kick" use:submit class="flex flex-wrap items-center gap-2">
-			<span class="w-20 text-sm text-zinc-400">Kick</span>
-			<select name="minutes" class="{input} w-40">
-				{#each KICK_BANS as [m, label]}<option value={m}>{label}</option>{/each}
-			</select>
-			<button class={button}>Kick</button>
-		</form>
-	{/if}
-
-	{#each [['lock', 'Lock', d.locked], ['mute', 'Mute', d.muted]] as const as [name, verb, active]}
-		<div>
+		{#each [['lock', 'Lock', d.locked], ['mute', 'Mute', d.muted]] as const as [name, verb, active]}
 			{#if active}
 				<form method="POST" action="?/un{name}" use:submit class="flex flex-wrap items-center gap-2">
-					<span class="w-20 text-sm text-zinc-400">{verb}</span>
-					<button class={button}>Un{name}</button>
+					<span class="w-20 text-sm text-muted-foreground">{verb}</span>
+					<Button type="submit">Un{name}</Button>
 				</form>
 			{:else}
 				<form method="POST" action="?/{name}" use:submit class="flex flex-wrap items-center gap-2">
-					<span class="w-20 text-sm text-zinc-400">{verb}</span>
+					<span class="w-20 text-sm text-muted-foreground">{verb}</span>
 					<DurationReason />
-					<button class={button}>{verb}</button>
+					<Button type="submit">{verb}</Button>
 				</form>
 			{/if}
-		</div>
-	{/each}
+		{/each}
 
-	<div>
 		<form method="POST" action="?/chpass" use:submit class="flex flex-wrap items-center gap-2">
-			<span class="w-20 text-sm text-zinc-400">Password</span>
-			<input name="password" bind:value={newPass} required minlength="3" placeholder="New password" autocomplete="new-password" class="{input} w-48 font-mono" />
-			<button type="button" class={small} onclick={genPass}>Generate</button>
-			<button class={button}>Set password</button>
+			<span class="w-20 text-sm text-muted-foreground">Password</span>
+			<Input name="password" bind:value={newPass} required minlength={3} placeholder="New password" autocomplete="new-password" class="w-48 font-mono" />
+			<Button variant="outline" onclick={genPass}>Generate</Button>
+			<Button type="submit">Set password</Button>
 		</form>
-	</div>
 
-	{#if !data.deleted}
-		<div>
+		{#if !data.deleted}
 			<form
 				method="POST"
 				action="?/delete"
-				use:submit={{ confirm: { title: `Delete ${p.username}? Locks permanently and kicks; unlock to restore.`, destructive: true } }}
+				use:submit={{ confirm: { title: `Delete ${p.username}?`, body: 'Locks permanently and kicks; unlock to restore.', action: 'Delete', destructive: true } }}
 				class="flex flex-wrap items-center gap-2"
 			>
-				<span class="w-20 text-sm text-zinc-400">Delete</span>
-				<button class="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500">Delete account</button>
-				<span class="text-xs text-zinc-400">Soft delete: permanent lock + kick. Unlock to restore.</span>
+				<span class="w-20 text-sm text-muted-foreground">Delete</span>
+				<Button type="submit" variant="destructive">Delete account</Button>
+				<span class="text-xs text-muted-foreground">Soft delete: permanent lock + kick. Unlock to restore.</span>
 			</form>
-		</div>
-	{/if}
-</section>
+		{/if}
+	</Card.Content>
+</Card.Root>

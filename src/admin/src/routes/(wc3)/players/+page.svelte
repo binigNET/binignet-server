@@ -1,9 +1,13 @@
 <script lang="ts">
-	import { submit } from '$lib/submit';
 	import { onMount } from 'svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as Table from '$lib/components/ui/table';
 	import { ago, localDateTime } from '$lib/format';
-	import { button, input, small } from '$lib/styles';
 	import { autoRefresh } from '$lib/refresh.svelte';
+	import { submit } from '$lib/submit';
 
 	let { data } = $props();
 	// page 1 is the live view; later pages and searches stay still while browsing
@@ -18,71 +22,73 @@
 
 <div class="mb-1 flex items-baseline gap-3">
 	<h1 class="text-xl font-semibold">Players</h1>
-	<span class="text-sm text-zinc-400">
+	<span class="text-sm text-muted-foreground">
 		{data.online} online · {data.accounts} accounts
 		{#if data.updatedAt}· status {ago(data.updatedAt)}{/if}
 	</span>
 </div>
-<p class="mb-4 flex gap-4 text-xs text-zinc-400">
-	<span><span class="inline-block size-2 rounded-full bg-emerald-400"></span> online</span>
-	<span><span class="inline-block size-2 rounded-full bg-orange-400"></span> bot online</span>
-	<span><span class="inline-block size-2 rounded-full ring-1 ring-orange-400"></span> bot offline</span>
+<p class="mb-4 flex gap-4 text-xs text-muted-foreground">
+	<span><span class="inline-block size-2 rounded-full bg-success"></span> online</span>
+	<span><span class="inline-block size-2 rounded-full bg-chart-3"></span> bot online</span>
+	<span><span class="inline-block size-2 rounded-full ring-1 ring-chart-3"></span> bot offline</span>
 </p>
 
 {#if !data.updatedAt}
-	<p class="mb-2 text-sm text-amber-400">Status file missing — online state unknown.</p>
+	<p class="mb-2 text-sm text-warning">Status file missing — online state unknown.</p>
 {/if}
 {#if data.dbError}
-	<p class="mb-2 text-sm text-red-400">Database unreachable ({data.dbError}) — showing online players only.</p>
+	<p class="mb-2 text-sm text-destructive">Database unreachable ({data.dbError}) — showing online players only.</p>
 {/if}
 
 <form method="GET" class="mb-3 flex items-center gap-2">
-	<input name="q" value={data.q} placeholder="Search name" class="{input} w-56" />
-	<button class={small}>Search</button>
-	{#if data.q}<a href="?" class="text-xs text-zinc-400 hover:text-zinc-100">clear</a>{/if}
+	<Input name="q" value={data.q} placeholder="Search name" class="w-56" />
+	<Button type="submit" size="sm" variant="outline">Search</Button>
+	{#if data.q}<Button href="?" size="sm" variant="ghost">Clear</Button>{/if}
 </form>
 
 {#if !data.rows.length}
-	<p class="text-sm text-zinc-400">{data.q ? 'No players match.' : 'No accounts yet.'}</p>
+	<p class="text-sm text-muted-foreground">{data.q ? 'No players match.' : 'No accounts yet.'}</p>
 {:else}
-	<table class="w-full text-left text-sm">
-		<thead class="text-zinc-400">
-			<tr><th class="py-2">Name</th><th>Client</th><th>Game</th><th>Last login</th></tr>
-		</thead>
-		<tbody>
+	<Table.Root>
+		<Table.Header>
+			<Table.Row><Table.Head>Name</Table.Head><Table.Head>Client</Table.Head><Table.Head>Game</Table.Head><Table.Head>Last login</Table.Head></Table.Row>
+		</Table.Header>
+		<Table.Body>
 			{#each data.rows as p (p.name)}
-				<tr class="border-t border-zinc-800">
-					<td class="py-2">
-						<span class="mr-2 inline-block size-2 rounded-full {p.bot ? (p.online ? 'bg-orange-400' : 'ring-1 ring-orange-400') : p.online ? 'bg-emerald-400' : ''}"></span>
-						<a href="/players/{encodeURIComponent(p.name)}" class="hover:underline {p.deleted ? 'text-zinc-500 line-through' : p.online ? '' : 'text-zinc-300'}">{p.name}</a>
-						{#if p.deleted}<span class="ml-2 rounded bg-red-500/15 px-1.5 py-0.5 text-xs text-red-300">deleted</span>{/if}
-					</td>
-					<td>{p.clienttag ?? '—'}</td>
-					<td>{p.game ?? '—'}</td>
-					<td class="text-zinc-400">
-						{#if p.online}<span class="text-emerald-400">online now</span>
+				<Table.Row>
+					<Table.Cell>
+						<span class="mr-2 inline-block size-2 rounded-full {p.bot ? (p.online ? 'bg-chart-3' : 'ring-1 ring-chart-3') : p.online ? 'bg-success' : ''}"></span>
+						<a href="/players/{encodeURIComponent(p.name)}" class="hover:underline {p.deleted ? 'text-muted-foreground line-through' : p.online ? '' : 'text-foreground/80'}">{p.name}</a>
+						{#if p.deleted}<Badge variant="destructive" class="ml-2">deleted</Badge>{/if}
+					</Table.Cell>
+					<Table.Cell>{p.clienttag ?? '—'}</Table.Cell>
+					<Table.Cell>{p.game ?? '—'}</Table.Cell>
+					<Table.Cell class="text-muted-foreground">
+						{#if p.online}<span class="text-success">online now</span>
 						{:else if !p.lastLogin}never
 						{:else if mounted}{localDateTime(p.lastLogin)}{/if}
-					</td>
-				</tr>
+					</Table.Cell>
+				</Table.Row>
 			{/each}
-		</tbody>
-	</table>
+		</Table.Body>
+	</Table.Root>
 {/if}
 
 {#if data.pages > 1}
 	<nav class="mt-3 flex items-center gap-3 text-sm">
-		{#if data.page > 1}<a href={href(data.page - 1)} class={small}>← Prev</a>{:else}<span class="{small} opacity-40">← Prev</span>{/if}
-		<span class="text-zinc-400">Page {data.page} of {data.pages} · {data.total} players</span>
-		{#if data.page < data.pages}<a href={href(data.page + 1)} class={small}>Next →</a>{:else}<span class="{small} opacity-40">Next →</span>{/if}
+		<Button href={data.page > 1 ? href(data.page - 1) : undefined} disabled={data.page <= 1} size="sm" variant="outline">← Prev</Button>
+		<span class="text-muted-foreground">Page {data.page} of {data.pages} · {data.total} players</span>
+		<Button href={data.page < data.pages ? href(data.page + 1) : undefined} disabled={data.page >= data.pages} size="sm" variant="outline">Next →</Button>
 	</nav>
 {/if}
 
-<section class="mt-10">
-	<h2 class="mb-2 font-medium">Create player</h2>
-	<form method="POST" action="?/create" use:submit class="flex flex-wrap gap-2">
-		<input name="user" required maxlength="15" placeholder="Username" autocomplete="off" class="{input} w-44" />
-		<input name="password" required minlength="3" placeholder="Password" autocomplete="new-password" class="{input} w-44" />
-		<button class={button}>Create</button>
-	</form>
-</section>
+<Card.Root class="mt-8 max-w-xl">
+	<Card.Header><Card.Title>Create player</Card.Title></Card.Header>
+	<Card.Content>
+		<form method="POST" action="?/create" use:submit class="flex flex-wrap gap-2">
+			<Input name="user" required maxlength={15} placeholder="Username" autocomplete="off" class="w-44" />
+			<Input name="password" required minlength={3} placeholder="Password" autocomplete="new-password" class="w-44" />
+			<Button type="submit">Create</Button>
+		</form>
+	</Card.Content>
+</Card.Root>

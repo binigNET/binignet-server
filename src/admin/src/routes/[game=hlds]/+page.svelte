@@ -1,10 +1,15 @@
 <script lang="ts">
-	import { submit } from '$lib/submit';
-	import DurationReason from '$lib/DurationReason.svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import * as NativeSelect from '$lib/components/ui/native-select';
+	import * as Popover from '$lib/components/ui/popover';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import * as Table from '$lib/components/ui/table';
+	import DurationReason from '$lib/DurationReason.svelte';
 	import { latest } from '$lib/latest.svelte';
 	import { autoRefresh } from '$lib/refresh.svelte';
-	import { button, input, small } from '$lib/styles';
+	import { submit } from '$lib/submit';
 
 	let { data } = $props();
 	autoRefresh(10_000);
@@ -32,148 +37,147 @@
 	<div class="mb-6 space-y-2"><Skeleton class="h-4 w-64" /><Skeleton class="h-4 w-40" /><Skeleton class="h-4 w-52" /></div>
 {:else if info}
 	<dl class="mb-6 grid grid-cols-[8rem_1fr] gap-y-1 text-sm">
-		<dt class="text-zinc-400">Hostname</dt>
+		<dt class="text-muted-foreground">Hostname</dt>
 		<dd>{info.name}</dd>
-		<dt class="text-zinc-400">Map</dt>
-		<dd>{info.map}</dd>
-		<dt class="text-zinc-400">Players</dt>
+		<dt class="text-muted-foreground">Map</dt>
+		<dd class="font-mono">{info.map}</dd>
+		<dt class="text-muted-foreground">Players</dt>
 		<dd>{info.players - info.bots} / {info.maxPlayers}{info.bots ? ` (+${info.bots} bots)` : ''}</dd>
 	</dl>
 {/if}
 
-<div class="mb-8 grid gap-4 md:grid-cols-2">
-	<section class="rounded border border-zinc-800 p-4">
-		<h2 class="mb-2 font-medium">Map</h2>
-		<form
-			method="POST"
-			action="?/map"
-			use:submit={{ confirm: `Change map to ${custom.trim() || map}?`, reset: false }}
-			class="flex flex-wrap items-center gap-2"
-		>
-			{#if !maps.value}
-				<Skeleton class="h-9 w-56" />
-			{:else}
-				<select name="map" bind:value={map} class="{input} max-w-56">
-					{#if maps.value.cycle.length}
-						<optgroup label="Map cycle">{#each maps.value.cycle as m}<option value={m}>{m}</option>{/each}</optgroup>
-					{/if}
-					{#if maps.value.other.length}
-						<optgroup label="Other">{#each maps.value.other as m}<option value={m}>{m}</option>{/each}</optgroup>
-					{/if}
-				</select>
-			{/if}
-			<input name="custom" bind:value={custom} maxlength="64" placeholder="or type a map" class="{input} w-40" />
-			<button class={button}>Change map</button>
-		</form>
-		<form
-			method="POST"
-			action="?/restart"
-			use:submit={{ confirm: `${data.restartLabel}?` }}
-			class="mt-3"
-		>
-			<button class={small}>{data.restartLabel}</button>
-		</form>
-	</section>
+<div class="mb-6 grid gap-4 md:grid-cols-2">
+	<Card.Root>
+		<Card.Header><Card.Title>Map</Card.Title></Card.Header>
+		<Card.Content class="space-y-3">
+			<form method="POST" action="?/map" use:submit={{ confirm: `Change map to ${custom.trim() || map}?`, reset: false }} class="flex flex-wrap items-center gap-2">
+				{#if !maps.value}
+					<Skeleton class="h-8 w-48" />
+				{:else}
+					<NativeSelect.Root name="map" bind:value={map} class="max-w-56">
+						{#if maps.value.cycle.length}
+							<NativeSelect.OptGroup label="Map cycle">{#each maps.value.cycle as m}<NativeSelect.Option value={m}>{m}</NativeSelect.Option>{/each}</NativeSelect.OptGroup>
+						{/if}
+						{#if maps.value.other.length}
+							<NativeSelect.OptGroup label="Other">{#each maps.value.other as m}<NativeSelect.Option value={m}>{m}</NativeSelect.Option>{/each}</NativeSelect.OptGroup>
+						{/if}
+					</NativeSelect.Root>
+				{/if}
+				<Input name="custom" bind:value={custom} maxlength={64} placeholder="or type a map" class="w-40" />
+				<Button type="submit">Change map</Button>
+			</form>
+			<form method="POST" action="?/restart" use:submit={{ confirm: `${data.restartLabel}?` }}>
+				<Button type="submit" size="sm" variant="outline">{data.restartLabel}</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 
-	<section class="rounded border border-zinc-800 p-4">
-		<h2 class="mb-2 font-medium">Bots <span class="text-sm font-normal text-zinc-400">({bots} in game)</span></h2>
-		<div class="flex flex-wrap items-center gap-2">
-			<form
-				method="POST"
-				action="?/kickbots"
-				use:submit={{ confirm: { title: `Kick all ${bots} bots?`, destructive: true } }}
-			>
-				<button class="{small} text-red-400" disabled={!bots}>Kick all bots</button>
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>Bots <span class="text-sm font-normal text-muted-foreground">({bots} in game)</span></Card.Title>
+		</Card.Header>
+		<Card.Content class="space-y-3">
+			<div class="flex flex-wrap items-center gap-2">
+				<form method="POST" action="?/kickbots" use:submit={{ confirm: { title: `Kick all ${bots} bots?`, destructive: true } }}>
+					<Button type="submit" size="sm" variant="destructive" disabled={!bots}>Kick all bots</Button>
+				</form>
+				<form method="POST" action="?/readdbots" use:submit>
+					<Button type="submit" size="sm" variant="outline">Re-add bots ({data.botCfg.defaults.bots})</Button>
+				</form>
+				<form method="POST" action="?/addbots" use:submit={{ reset: false }} class="flex gap-1">
+					<Input name="n" type="number" min={1} max={31} value={1} class="h-7 w-16" />
+					<Button type="submit" size="sm" variant="outline">Add</Button>
+				</form>
+			</div>
+			<form method="POST" action="?/botskill" use:submit={{ reset: false }} class="flex items-center gap-1">
+				<Input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="h-7 w-16" />
+				<Button type="submit" size="sm" variant="outline">Set skill</Button>
+				<span class="text-xs text-muted-foreground">{sk.hint}</span>
 			</form>
-			<form method="POST" action="?/readdbots" use:submit>
-				<button class={small}>Re-add bots ({data.botCfg.defaults.bots})</button>
-			</form>
-			<form method="POST" action="?/addbots" use:submit={{ reset: false }} class="flex gap-1">
-				<input name="n" type="number" min="1" max="31" value="1" class="{input} w-16 px-2 py-1 text-xs" />
-				<button class={small}>Add</button>
-			</form>
-		</div>
-		<form method="POST" action="?/botskill" use:submit={{ reset: false }} class="mt-3 flex items-center gap-1">
-			<input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" />
-			<button class={small}>Set skill</button>
-			<span class="text-xs text-zinc-400">{sk.hint}</span>
-		</form>
-		<details class="mt-3 text-sm">
-			<summary class="cursor-pointer text-zinc-400">Defaults (server start)</summary>
-			<form method="POST" action="?/savebots" use:submit={{ reset: false }} class="mt-2 flex flex-wrap items-center gap-2">
-				<label class="flex items-center gap-1 text-xs">Bots <input name="bots" type="number" min="0" max="31" value={data.botCfg.defaults.bots} class="{input} w-16 px-2 py-1 text-xs" /></label>
-				<label class="flex items-center gap-1 text-xs">Skill <input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" /></label>
-				<button class={small}>Save as default</button>
-			</form>
-		</details>
-	</section>
+			<details class="text-sm">
+				<summary class="cursor-pointer text-muted-foreground">Defaults (server start)</summary>
+				<form method="POST" action="?/savebots" use:submit={{ reset: false }} class="mt-2 flex flex-wrap items-center gap-2">
+					<label class="flex items-center gap-1 text-xs">Bots <Input name="bots" type="number" min={0} max={31} value={data.botCfg.defaults.bots} class="h-7 w-16" /></label>
+					<label class="flex items-center gap-1 text-xs">Skill <Input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="h-7 w-16" /></label>
+					<Button type="submit" size="sm" variant="outline">Save as default</Button>
+				</form>
+			</details>
+		</Card.Content>
+	</Card.Root>
 </div>
 
-<section class="mb-8 rounded border border-zinc-800 p-4">
-	<h2 class="mb-2 font-medium">Say</h2>
-	<form method="POST" action="?/say" use:submit class="flex flex-wrap items-center gap-2">
-		<input name="msg" required maxlength="190" placeholder="Message to all players" class="{input} min-w-60 flex-1" />
-		<select name="mode" class="{input} w-28">
-			<option value="chat">Chat</option>
-			<option value="center">Centre</option>
-			<option value="hud">HUD</option>
-		</select>
-		<button class={button}>Send</button>
-	</form>
-</section>
+<Card.Root class="mb-6">
+	<Card.Header><Card.Title>Say</Card.Title></Card.Header>
+	<Card.Content>
+		<form method="POST" action="?/say" use:submit class="flex flex-wrap items-center gap-2">
+			<Input name="msg" required maxlength={190} placeholder="Message to all players" class="w-auto min-w-60 flex-1" />
+			<NativeSelect.Root name="mode" class="w-28">
+				<NativeSelect.Option value="chat">Chat</NativeSelect.Option>
+				<NativeSelect.Option value="center">Centre</NativeSelect.Option>
+				<NativeSelect.Option value="hud">HUD</NativeSelect.Option>
+			</NativeSelect.Root>
+			<Button type="submit">Send</Button>
+		</form>
+	</Card.Content>
+</Card.Root>
 
-<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-zinc-400">({players.length})</span></h2>
+<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-muted-foreground">({players.length})</span></h2>
 {#if !server.value}
 	<div class="space-y-2"><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /></div>
 {:else if error}
-	<p class="text-sm text-amber-400">{error}</p>
+	<p class="text-sm text-warning">{error}</p>
 {:else if !players.length}
-	<p class="text-sm text-zinc-400">No players online.</p>
+	<p class="text-sm text-muted-foreground">No players online.</p>
 {:else}
-	<table class="w-full text-left text-sm">
-		<thead class="text-zinc-400">
-			<tr><th class="py-2">#</th><th>Name</th><th>ID</th><th>IP</th><th>Frags</th><th>Time</th><th>Ping</th><th></th></tr>
-		</thead>
-		<tbody>
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>#</Table.Head><Table.Head>Name</Table.Head><Table.Head>ID</Table.Head><Table.Head>IP</Table.Head>
+				<Table.Head>Frags</Table.Head><Table.Head>Time</Table.Head><Table.Head>Ping</Table.Head><Table.Head></Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
 			{#each players as p (p.userid)}
-				<tr class="border-t border-zinc-800">
-					<td class="py-2 text-zinc-400">{p.userid}</td>
-					<td>{p.name}</td>
-					<td class="font-mono text-xs">{p.uniqueid}</td>
-					<td class="font-mono text-xs">{p.addr.replace(/:\d+$/, '')}</td>
-					<td>{p.frags}</td>
-					<td>{p.time}</td>
-					<td>{p.ping}</td>
-					<td class="text-right">
+				<Table.Row>
+					<Table.Cell class="text-muted-foreground">{p.userid}</Table.Cell>
+					<Table.Cell>{p.name}</Table.Cell>
+					<Table.Cell class="font-mono text-xs">{p.uniqueid}</Table.Cell>
+					<Table.Cell class="font-mono text-xs">{p.addr.replace(/:\d+$/, '')}</Table.Cell>
+					<Table.Cell>{p.frags}</Table.Cell>
+					<Table.Cell>{p.time}</Table.Cell>
+					<Table.Cell>{p.ping}</Table.Cell>
+					<Table.Cell>
 						<div class="flex justify-end gap-1">
 							<form method="POST" action="?/kick" use:submit>
 								<input type="hidden" name="userid" value={p.userid} />
-								<button class={small}>Kick</button>
+								<Button type="submit" size="sm" variant="outline">Kick</Button>
 							</form>
-							<details class="relative">
-								<summary class="{small} cursor-pointer list-none text-red-400">Ban</summary>
-								<form
-									method="POST"
-									action="?/ban"
-									use:submit={{ confirm: { title: `Ban ${p.name}?`, destructive: true } }}
-									class="absolute right-0 z-10 mt-1 flex w-96 flex-wrap gap-2 rounded border border-zinc-700 bg-zinc-950 p-3"
-								>
-									<input type="hidden" name="userid" value={p.userid} />
-									<input type="hidden" name="uniqueid" value={p.uniqueid} />
-									<input type="hidden" name="ip" value={p.addr.replace(/:\d+$/, '')} />
-									<select name="type" class="{input} w-28">
-										<option value="both">ID + IP</option>
-										<option value="id">Steam ID</option>
-										<option value="ip">IP</option>
-									</select>
-									<DurationReason />
-									<button class="{small} text-red-400">Ban {p.name}</button>
-								</form>
-							</details>
+							<Popover.Root>
+								<Popover.Trigger class={buttonVariants({ size: 'sm', variant: 'destructive' })}>Ban</Popover.Trigger>
+								<Popover.Content align="end" class="w-96">
+									<form
+										method="POST"
+										action="?/ban"
+										use:submit={{ confirm: { title: `Ban ${p.name}?`, destructive: true } }}
+										class="flex flex-wrap gap-2"
+									>
+										<input type="hidden" name="userid" value={p.userid} />
+										<input type="hidden" name="uniqueid" value={p.uniqueid} />
+										<input type="hidden" name="ip" value={p.addr.replace(/:\d+$/, '')} />
+										<NativeSelect.Root name="type" class="w-28">
+											<NativeSelect.Option value="both">ID + IP</NativeSelect.Option>
+											<NativeSelect.Option value="id">Steam ID</NativeSelect.Option>
+											<NativeSelect.Option value="ip">IP</NativeSelect.Option>
+										</NativeSelect.Root>
+										<DurationReason />
+										<Button type="submit" size="sm" variant="destructive">Ban {p.name}</Button>
+									</form>
+								</Popover.Content>
+							</Popover.Root>
 						</div>
-					</td>
-				</tr>
+					</Table.Cell>
+				</Table.Row>
 			{/each}
-		</tbody>
-	</table>
+		</Table.Body>
+	</Table.Root>
 {/if}

@@ -1,39 +1,42 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import * as NativeSelect from '$lib/components/ui/native-select';
+	import * as Table from '$lib/components/ui/table';
 	import { submit } from '$lib/submit';
-	import { input, small } from '$lib/styles';
 
 	let { data } = $props();
 </script>
 
 <h1 class="mb-1 text-xl font-semibold">Settings</h1>
-<p class="mb-4 text-sm text-zinc-400">
+<p class="mb-4 text-sm text-muted-foreground">
 	Apply changes the running server until the next restart or map change. Save as default also writes the server config.
 </p>
 {#if data.error}
-	<p class="mb-3 text-sm text-amber-400">{data.error}</p>
+	<p class="mb-3 text-sm text-warning">{data.error}</p>
 {/if}
-<table class="w-full max-w-3xl text-left text-sm">
-	<thead class="text-zinc-400">
-		<tr><th class="py-2">Setting</th><th>Live</th><th>Saved</th><th></th></tr>
-	</thead>
-	<tbody>
+<Table.Root class="max-w-3xl">
+	<Table.Header>
+		<Table.Row><Table.Head>Setting</Table.Head><Table.Head>Live</Table.Head><Table.Head>Saved</Table.Head><Table.Head></Table.Head></Table.Row>
+	</Table.Header>
+	<Table.Body>
 		{#each data.cvars as c (c.name)}
-			<tr class="border-t border-zinc-800">
-				<td class="py-2">{c.label} <span class="font-mono text-xs text-zinc-500">{c.name}</span></td>
-				<td class="font-mono text-xs">{c.live ?? '—'}</td>
-				<td class="font-mono text-xs text-zinc-400">{c.saved ?? '—'}</td>
-				<td>
+			<Table.Row>
+				<Table.Cell>{c.label} <span class="font-mono text-xs text-muted-foreground">{c.name}</span></Table.Cell>
+				<Table.Cell class="font-mono text-xs">{c.live ?? '—'}</Table.Cell>
+				<Table.Cell class="font-mono text-xs text-muted-foreground">{c.saved ?? '—'}</Table.Cell>
+				<Table.Cell>
 					<form method="POST" use:submit={{ reset: false }} class="flex justify-end gap-1">
 						<input type="hidden" name="name" value={c.name} />
 						{#if c.type === 'bool'}
-							<select name="value" class="{input} w-20 px-2 py-1 text-xs">
-								<option value="1" selected={c.live === '1'}>on</option>
-								<option value="0" selected={c.live !== '1'}>off</option>
-							</select>
+							<NativeSelect.Root name="value" size="sm" class="w-20">
+								<NativeSelect.Option value="1" selected={c.live === '1'}>on</NativeSelect.Option>
+								<NativeSelect.Option value="0" selected={c.live !== '1'}>off</NativeSelect.Option>
+							</NativeSelect.Root>
 						{:else if c.type === 'text'}
-							<input name="value" value={c.live ?? ''} maxlength="32" placeholder="(empty)" class="{input} w-32 px-2 py-1 text-xs" />
+							<Input name="value" value={c.live ?? ''} maxlength={32} placeholder="(empty)" class="h-7 w-32" />
 						{:else}
-							<input
+							<Input
 								name="value"
 								type="number"
 								min={c.type.min}
@@ -41,14 +44,14 @@
 								step={c.type.float ? 0.25 : 1}
 								value={c.live ?? ''}
 								required
-								class="{input} w-24 px-2 py-1 text-xs"
+								class="h-7 w-24"
 							/>
 						{/if}
-						<button formaction="?/apply" class={small}>Apply</button>
-						<button formaction="?/save" class={small}>Save as default</button>
+						<Button type="submit" formaction="?/apply" size="sm" variant="outline">Apply</Button>
+						<Button type="submit" formaction="?/save" size="sm" variant="outline">Save as default</Button>
 					</form>
-				</td>
-			</tr>
+				</Table.Cell>
+			</Table.Row>
 		{/each}
-	</tbody>
-</table>
+	</Table.Body>
+</Table.Root>

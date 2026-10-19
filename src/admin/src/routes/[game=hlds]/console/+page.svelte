@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { submit } from '$lib/submit';
-	import { button, input } from '$lib/styles';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 
 	let { data } = $props();
 
@@ -15,15 +16,15 @@
 </script>
 
 <h1 class="mb-1 text-xl font-semibold">Console</h1>
-<p class="mb-3 text-sm text-zinc-400">Runs server console commands over rcon (e.g. <code>status</code>, <code>maps *</code>, <code>amx_plugins</code>). History is kept for this page only.</p>
+<p class="mb-3 text-sm text-muted-foreground">Runs server console commands over rcon (e.g. <code>status</code>, <code>maps *</code>, <code>amx_plugins</code>). History is kept for this page only.</p>
 
-<div bind:this={box} class="mb-3 h-[60vh] overflow-auto rounded border border-zinc-800 bg-black/40 p-2 font-mono text-xs leading-5">
+<div bind:this={box} class="mb-3 h-[60vh] overflow-auto rounded-lg border bg-muted/40 p-2 font-mono text-xs leading-5">
 	{#if !history.length}
-		<p class="text-zinc-500">No commands yet.</p>
+		<p class="text-muted-foreground">No commands yet.</p>
 	{/if}
 	{#each history as h}
-		<div class="text-sky-400">] {h.cmd}</div>
-		<pre class="mb-2 whitespace-pre-wrap break-all {h.ok ? '' : 'text-red-300'}">{h.out}</pre>
+		<div class="text-primary">] {h.cmd}</div>
+		<pre class="mb-2 whitespace-pre-wrap break-all {h.ok ? '' : 'text-destructive'}">{h.out}</pre>
 	{/each}
 </div>
 
@@ -44,6 +45,6 @@
 	}}
 	class="flex gap-2"
 >
-	<input name="cmd" bind:value={cmd} autocomplete="off" required maxlength="500" placeholder="{data.game} console command" class="{input} flex-1 font-mono" />
-	<button class={button}>Run</button>
+	<Input name="cmd" bind:value={cmd} autocomplete="off" required maxlength={500} placeholder="{data.game} console command" class="flex-1 font-mono" />
+	<Button type="submit">Run</Button>
 </form>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { small } from '$lib/styles';
+	import { Button } from '$lib/components/ui/button';
 
 	let { source }: { source: string } = $props();
 
@@ -81,10 +81,10 @@
 
 	const chip = $derived(
 		conn === 'live'
-			? ['live', 'text-emerald-400']
+			? ['live', 'text-success']
 			: conn === 'down'
-				? [`${source} not running — retrying${error ? ` (${error})` : ''}`, 'text-amber-400']
-				: [conn === 'connecting' ? 'connecting…' : 'reconnecting…', 'text-zinc-400']
+				? [`${source} not running — retrying${error ? ` (${error})` : ''}`, 'text-warning']
+				: [conn === 'connecting' ? 'connecting…' : 'reconnecting…', 'text-muted-foreground']
 	);
 </script>
 
@@ -92,19 +92,19 @@
 	<h1 class="text-xl font-semibold">{source} logs</h1>
 	<span class="text-sm {chip[1]}">● {chip[0]}</span>
 	<div class="ml-auto flex gap-2">
-		<button class={small} onclick={togglePause}>{paused ? `Resume${held ? ` (${held} new)` : ''}` : 'Pause'}</button>
-		<button class={small} onclick={() => (lines = [])}>Clear</button>
-		<button class={small} onclick={download} disabled={!lines.length}>Download</button>
+		<Button size="sm" variant="outline" onclick={togglePause}>{paused ? `Resume${held ? ` (${held} new)` : ''}` : 'Pause'}</Button>
+		<Button size="sm" variant="outline" onclick={() => (lines = [])}>Clear</Button>
+		<Button size="sm" variant="outline" onclick={download} disabled={!lines.length}>Download</Button>
 	</div>
 </div>
 
-<div bind:this={box} onscroll={onScroll} class="h-[75vh] overflow-auto rounded border border-zinc-800 bg-black/40 p-2 font-mono text-xs leading-5">
+<div bind:this={box} onscroll={onScroll} class="h-[75vh] overflow-auto rounded-lg border bg-muted/40 p-2 font-mono text-xs leading-5">
 	{#if !lines.length}
-		<p class="text-zinc-500">No log lines yet.</p>
+		<p class="text-muted-foreground">No log lines yet.</p>
 	{/if}
 	{#each lines as l}
-		<div class="whitespace-pre-wrap break-all {l.s === 'err' ? 'text-red-300' : ''}">
-			<span class="text-zinc-500 select-none">{local(l.ts)}</span>  {l.t}
+		<div class="whitespace-pre-wrap break-all {l.s === 'err' ? 'text-destructive' : ''}">
+			<span class="text-muted-foreground select-none">{local(l.ts)}</span>  {l.t}
 		</div>
 	{/each}
 </div>

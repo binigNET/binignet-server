@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import * as Table from '$lib/components/ui/table';
 	import { submit } from '$lib/submit';
-	import { small } from '$lib/styles';
 
 	let { data } = $props();
 
@@ -12,29 +13,29 @@
 
 <h1 class="mb-4 text-xl font-semibold">Bans</h1>
 {#if data.error}
-	<p class="text-sm text-amber-400">{data.error}</p>
+	<p class="text-sm text-warning">{data.error}</p>
 {:else}
 	{#each lists as [title, list]}
-		<h2 class="mt-4 mb-2 font-medium">{title} <span class="text-sm font-normal text-zinc-400">({list.length})</span></h2>
+		<h2 class="mt-4 mb-2 font-medium">{title} <span class="text-sm font-normal text-muted-foreground">({list.length})</span></h2>
 		{#if !list.length}
-			<p class="text-sm text-zinc-400">None.</p>
+			<p class="text-sm text-muted-foreground">None.</p>
 		{:else}
-			<table class="w-full max-w-xl text-left text-sm">
-				<tbody>
+			<Table.Root class="max-w-xl">
+				<Table.Body>
 					{#each list as b (b.id)}
-						<tr class="border-t border-zinc-800">
-							<td class="py-2 font-mono text-xs">{b.id}</td>
-							<td class="text-zinc-400">{b.expires}</td>
-							<td class="text-right">
+						<Table.Row>
+							<Table.Cell class="font-mono text-xs">{b.id}</Table.Cell>
+							<Table.Cell class="text-muted-foreground">{b.expires}</Table.Cell>
+							<Table.Cell class="text-right">
 								<form method="POST" action="?/unban" use:submit>
 									<input type="hidden" name="id" value={b.id} />
-									<button class={small}>Unban</button>
+									<Button type="submit" size="sm" variant="outline">Unban</Button>
 								</form>
-							</td>
-						</tr>
+							</Table.Cell>
+						</Table.Row>
 					{/each}
-				</tbody>
-			</table>
+				</Table.Body>
+			</Table.Root>
 		{/if}
 	{/each}
 {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { input } from '$lib/styles';
+	import { Input } from '$lib/components/ui/input';
+	import * as NativeSelect from '$lib/components/ui/native-select';
 
 	// pvpgn /lock and /mute take hours; 0 = permanent
 	const DURATIONS = [
@@ -10,7 +11,7 @@
 	] as const;
 </script>
 
-<select name="hours" class="{input} w-32">
-	{#each DURATIONS as [h, label]}<option value={h} selected={h === 24}>{label}</option>{/each}
-</select>
-<input name="reason" placeholder="Reason" class="{input} min-w-40 flex-1" />
+<NativeSelect.Root name="hours" class="w-32">
+	{#each DURATIONS as [h, label]}<NativeSelect.Option value={h} selected={h === 24}>{label}</NativeSelect.Option>{/each}
+</NativeSelect.Root>
+<Input name="reason" placeholder="Reason" class="w-auto min-w-40 flex-1" />

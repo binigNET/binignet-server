@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Flash from '$lib/Flash.svelte';
+	import { submit } from '$lib/submit';
+	import { Button } from '$lib/components/ui/button';
 	import { button, input, small } from '$lib/styles';
 
-	let { data, form } = $props();
-	let hosting = $state<string | null>(null);
+	let { data } = $props();
 	const mb = (n: number) => (n / 1024 / 1024).toFixed(1) + ' MB';
 	// WC3 1.26 player colors by index
 	const COLORS = ['Red', 'Blue', 'Teal', 'Purple', 'Yellow', 'Orange', 'Green', 'Pink', 'Gray', 'Light Blue', 'Dark Green', 'Brown'];
@@ -13,13 +12,11 @@
 <h1 class="mb-4 text-xl font-semibold">Saves <span class="text-sm font-normal text-zinc-400">{data.saves.length} in aura/data/saves</span></h1>
 
 <section class="mb-6">
-	<form method="POST" action="?/upload" enctype="multipart/form-data" use:enhance class="flex flex-wrap items-center gap-2">
+	<form method="POST" action="?/upload" enctype="multipart/form-data" use:submit class="flex flex-wrap items-center gap-2">
 		<input type="file" name="file" accept=".w3z" required class="text-sm" />
 		<button class={button}>Upload</button>
 		<span class="text-xs text-zinc-400">.w3z from a player's Warcraft III\save\Multiplayer, max {mb(data.maxBytes)}. Keep the original file name.</span>
 	</form>
-	<Flash {form} name="upload" />
-	<Flash {form} name="host" />
 </section>
 
 <datalist id="accounts">{#each data.accounts as a}<option value={a}></option>{/each}</datalist>
@@ -30,7 +27,7 @@
 			<div class="mb-2 flex flex-wrap items-baseline gap-3">
 				<h2 class="font-medium">{s.name}</h2>
 				<span class="text-xs text-zinc-400">{mb(s.size)} · {new Date(s.mtime).toLocaleDateString()}</span>
-				<form method="POST" action="?/delete" class="ml-auto" use:enhance={({ cancel }) => { if (!confirm(`Delete ${s.name}?`)) cancel(); }}>
+				<form method="POST" action="?/delete" class="ml-auto" use:submit={{ confirm: { title: `Delete ${s.name}?`, destructive: true } }}>
 					<input type="hidden" name="name" value={s.name} /><button class="{small} text-red-400">Delete</button>
 				</form>
 			</div>
@@ -44,7 +41,7 @@
 				<form
 					method="POST"
 					action="?/host"
-					use:enhance={() => { hosting = s.name; return async ({ update }) => { await update({ reset: false }); hosting = null; }; }}
+					use:submit={{ reset: false }}
 					class="space-y-2"
 				>
 					<input type="hidden" name="save" value={s.name} />
@@ -62,11 +59,10 @@
 							{/each}
 						</tbody>
 					</table>
-					<button class={button} disabled={!s.map || hosting !== null}>{hosting === s.name ? 'Hosting… (loading map)' : 'Load'}</button>
+					<Button type="submit" disabled={!s.map} loadingText="Hosting… (loading map)">Load</Button>
 					<p class="text-xs text-zinc-400">Players must still have this save in their own Save\Multiplayer folder. Lobby auto-starts once all join; the save is deleted here after hosting.</p>
 				</form>
 			{/if}
-			<Flash {form} name="row:{s.name}" />
 		</section>
 	{:else}
 		<p class="text-sm text-zinc-400">No saves uploaded.</p>

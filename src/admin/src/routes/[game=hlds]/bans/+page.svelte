@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Flash from '$lib/Flash.svelte';
+	import { submit } from '$lib/submit';
 	import { small } from '$lib/styles';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
 	const lists = $derived([
 		['Steam IDs', data.ids],
@@ -12,7 +11,6 @@
 </script>
 
 <h1 class="mb-4 text-xl font-semibold">Bans</h1>
-<Flash {form} name="unban" />
 {#if data.error}
 	<p class="text-sm text-amber-400">{data.error}</p>
 {:else}
@@ -28,7 +26,7 @@
 							<td class="py-2 font-mono text-xs">{b.id}</td>
 							<td class="text-zinc-400">{b.expires}</td>
 							<td class="text-right">
-								<form method="POST" action="?/unban" use:enhance>
+								<form method="POST" action="?/unban" use:submit>
 									<input type="hidden" name="id" value={b.id} />
 									<button class={small}>Unban</button>
 								</form>

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { enhance } from '$app/forms';
+	import { submit } from '$lib/submit';
 	import DurationReason from '$lib/DurationReason.svelte';
-	import Flash from '$lib/Flash.svelte';
 	import { autoRefresh } from '$lib/refresh.svelte';
 	import { button, input, small } from '$lib/styles';
 
-	let { data, form } = $props();
+	let { data } = $props();
 	autoRefresh(10_000);
 
 	const info = $derived(data.server.info);
@@ -33,10 +32,7 @@
 		<form
 			method="POST"
 			action="?/map"
-			use:enhance={({ cancel }) => {
-				if (!confirm(`Change map to ${custom.trim() || map}?`)) cancel();
-				return async ({ update }) => update({ reset: false });
-			}}
+			use:submit={{ confirm: `Change map to ${custom.trim() || map}?`, reset: false }}
 			class="flex flex-wrap items-center gap-2"
 		>
 			<select name="map" bind:value={map} class="{input} max-w-56">
@@ -50,18 +46,14 @@
 			<input name="custom" bind:value={custom} maxlength="64" placeholder="or type a map" class="{input} w-40" />
 			<button class={button}>Change map</button>
 		</form>
-		<Flash {form} name="map" />
 		<form
 			method="POST"
 			action="?/restart"
-			use:enhance={({ cancel }) => {
-				if (!confirm(`${data.restartLabel}?`)) cancel();
-			}}
+			use:submit={{ confirm: `${data.restartLabel}?` }}
 			class="mt-3"
 		>
 			<button class={small}>{data.restartLabel}</button>
 		</form>
-		<Flash {form} name="restart" />
 	</section>
 
 	<section class="rounded border border-zinc-800 p-4">
@@ -70,40 +62,37 @@
 			<form
 				method="POST"
 				action="?/kickbots"
-				use:enhance={({ cancel }) => {
-					if (!confirm(`Kick all ${data.bots} bots?`)) cancel();
-				}}
+				use:submit={{ confirm: { title: `Kick all ${data.bots} bots?`, destructive: true } }}
 			>
 				<button class="{small} text-red-400" disabled={!data.bots}>Kick all bots</button>
 			</form>
-			<form method="POST" action="?/readdbots" use:enhance>
+			<form method="POST" action="?/readdbots" use:submit>
 				<button class={small}>Re-add bots ({data.botCfg.defaults.bots})</button>
 			</form>
-			<form method="POST" action="?/addbots" use:enhance={() => async ({ update }) => update({ reset: false })} class="flex gap-1">
+			<form method="POST" action="?/addbots" use:submit={{ reset: false }} class="flex gap-1">
 				<input name="n" type="number" min="1" max="31" value="1" class="{input} w-16 px-2 py-1 text-xs" />
 				<button class={small}>Add</button>
 			</form>
 		</div>
-		<form method="POST" action="?/botskill" use:enhance={() => async ({ update }) => update({ reset: false })} class="mt-3 flex items-center gap-1">
+		<form method="POST" action="?/botskill" use:submit={{ reset: false }} class="mt-3 flex items-center gap-1">
 			<input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" />
 			<button class={small}>Set skill</button>
 			<span class="text-xs text-zinc-400">{sk.hint}</span>
 		</form>
 		<details class="mt-3 text-sm">
 			<summary class="cursor-pointer text-zinc-400">Defaults (server start)</summary>
-			<form method="POST" action="?/savebots" use:enhance={() => async ({ update }) => update({ reset: false })} class="mt-2 flex flex-wrap items-center gap-2">
+			<form method="POST" action="?/savebots" use:submit={{ reset: false }} class="mt-2 flex flex-wrap items-center gap-2">
 				<label class="flex items-center gap-1 text-xs">Bots <input name="bots" type="number" min="0" max="31" value={data.botCfg.defaults.bots} class="{input} w-16 px-2 py-1 text-xs" /></label>
 				<label class="flex items-center gap-1 text-xs">Skill <input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="{input} w-16 px-2 py-1 text-xs" /></label>
 				<button class={small}>Save as default</button>
 			</form>
 		</details>
-		<Flash {form} name="bots" />
 	</section>
 </div>
 
 <section class="mb-8 rounded border border-zinc-800 p-4">
 	<h2 class="mb-2 font-medium">Say</h2>
-	<form method="POST" action="?/say" use:enhance class="flex flex-wrap items-center gap-2">
+	<form method="POST" action="?/say" use:submit class="flex flex-wrap items-center gap-2">
 		<input name="msg" required maxlength="190" placeholder="Message to all players" class="{input} min-w-60 flex-1" />
 		<select name="mode" class="{input} w-28">
 			<option value="chat">Chat</option>
@@ -112,11 +101,9 @@
 		</select>
 		<button class={button}>Send</button>
 	</form>
-	<Flash {form} name="say" />
 </section>
 
 <h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-zinc-400">({data.players.length})</span></h2>
-<Flash {form} name="player" />
 {#if data.error}
 	<p class="text-sm text-amber-400">{data.error}</p>
 {:else if !data.players.length}
@@ -138,7 +125,7 @@
 					<td>{p.ping}</td>
 					<td class="text-right">
 						<div class="flex justify-end gap-1">
-							<form method="POST" action="?/kick" use:enhance>
+							<form method="POST" action="?/kick" use:submit>
 								<input type="hidden" name="userid" value={p.userid} />
 								<button class={small}>Kick</button>
 							</form>
@@ -147,9 +134,7 @@
 								<form
 									method="POST"
 									action="?/ban"
-									use:enhance={({ cancel }) => {
-										if (!confirm(`Ban ${p.name}?`)) cancel();
-									}}
+									use:submit={{ confirm: { title: `Ban ${p.name}?`, destructive: true } }}
 									class="absolute right-0 z-10 mt-1 flex w-96 flex-wrap gap-2 rounded border border-zinc-700 bg-zinc-950 p-3"
 								>
 									<input type="hidden" name="userid" value={p.userid} />

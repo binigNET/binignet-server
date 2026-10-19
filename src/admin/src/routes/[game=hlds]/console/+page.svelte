@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { enhance } from '$app/forms';
+	import { submit } from '$lib/submit';
 	import { button, input } from '$lib/styles';
 
 	let { data } = $props();
@@ -11,7 +11,6 @@
 	type Entry = { cmd: string; out: string; ok: boolean };
 	let history = $state<Entry[]>([]);
 	let cmd = $state('');
-	let busy = $state(false);
 	let box: HTMLDivElement;
 </script>
 
@@ -30,21 +29,21 @@
 
 <form
 	method="POST"
-	use:enhance={({ cancel }) => {
-		const sent = cmd.trim();
-		if (!sent || (DANGER.test(sent) && !confirm(`"${sent}" can stop the server or lock out the dashboard. Run it?`))) return cancel();
-		busy = true;
-		return async ({ result }) => {
+	use:submit={{
+		toast: 'errors',
+		confirm: (fd) => {
+			const sent = String(fd.get('cmd') ?? '').trim();
+			return DANGER.test(sent) ? { title: `Run "${sent}"?`, body: 'It can stop the server or lock out the dashboard.', destructive: true } : null;
+		},
+		onResult: (result, fd) => {
 			const d = (result.type === 'success' || result.type === 'failure' ? result.data : null) as { ok?: boolean; message?: string } | null;
-			history.push({ cmd: sent, out: d?.message ?? `error (${result.type})`, ok: !!d?.ok });
+			history.push({ cmd: String(fd.get('cmd') ?? '').trim(), out: d?.message ?? `error (${result.type})`, ok: !!d?.ok });
 			cmd = '';
-			busy = false;
-			await tick();
-			box.scrollTop = box.scrollHeight;
-		};
+			tick().then(() => (box.scrollTop = box.scrollHeight));
+		}
 	}}
 	class="flex gap-2"
 >
-	<input name="cmd" bind:value={cmd} autocomplete="off" maxlength="500" placeholder="{data.game} console command" class="{input} flex-1 font-mono" />
-	<button class={button} disabled={busy}>Run</button>
+	<input name="cmd" bind:value={cmd} autocomplete="off" required maxlength="500" placeholder="{data.game} console command" class="{input} flex-1 font-mono" />
+	<button class={button}>Run</button>
 </form>

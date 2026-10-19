@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Flash from '$lib/Flash.svelte';
+	import { submit } from '$lib/submit';
 	import { button, input } from '$lib/styles';
 
-	let { data, form } = $props();
+	let { data } = $props();
 </script>
 
 <h1 class="mb-4 text-xl font-semibold">Banner</h1>
@@ -19,9 +18,8 @@
 	</div>
 {/if}
 
-<form method="POST" enctype="multipart/form-data" use:enhance={() => ({ update }) => update({ reset: false })} class="flex flex-col gap-2 md:max-w-lg">
+<form method="POST" enctype="multipart/form-data" use:submit={{ reset: false }} class="flex flex-col gap-2 md:max-w-lg">
 	<input type="file" name="file" accept="image/png" class="text-sm" />
 	<input name="url" required value={data.banner?.url ?? 'https://'} placeholder="Click-through URL" class={input} />
 	<button class="{button} self-start">Save</button>
 </form>
-<Flash {form} name="banner" />

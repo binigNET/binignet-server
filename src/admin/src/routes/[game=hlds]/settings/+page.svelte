@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Flash from '$lib/Flash.svelte';
+	import { submit } from '$lib/submit';
 	import { input, small } from '$lib/styles';
 
-	let { data, form } = $props();
+	let { data } = $props();
 </script>
 
 <h1 class="mb-1 text-xl font-semibold">Settings</h1>
 <p class="mb-4 text-sm text-zinc-400">
 	Apply changes the running server until the next restart or map change. Save as default also writes the server config.
 </p>
-<Flash {form} name="cvar" />
 {#if data.error}
 	<p class="mb-3 text-sm text-amber-400">{data.error}</p>
 {/if}
@@ -25,7 +23,7 @@
 				<td class="font-mono text-xs">{c.live ?? '—'}</td>
 				<td class="font-mono text-xs text-zinc-400">{c.saved ?? '—'}</td>
 				<td>
-					<form method="POST" use:enhance={() => async ({ update }) => update({ reset: false })} class="flex justify-end gap-1">
+					<form method="POST" use:submit={{ reset: false }} class="flex justify-end gap-1">
 						<input type="hidden" name="name" value={c.name} />
 						{#if c.type === 'bool'}
 							<select name="value" class="{input} w-20 px-2 py-1 text-xs">

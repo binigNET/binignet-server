@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 	import { ModeWatcher } from 'mode-watcher';
+	import ConfirmHost from '$lib/ConfirmHost.svelte';
+	import { Toaster } from '$lib/components/ui/sonner';
 	import { page } from '$app/state';
 	import { GAME_IDS, HLDS_GAMES } from '$lib/games';
 	import { WC3_LINKS, under } from '$lib/nav';
@@ -17,6 +19,8 @@
 
 <svelte:head><title>binignet admin</title></svelte:head>
 <ModeWatcher defaultMode="dark" />
+<Toaster richColors position="bottom-right" />
+<ConfirmHost />
 
 {#if data.authed}
 	<header class="flex items-center gap-6 border-b border-zinc-800 px-4 py-3">

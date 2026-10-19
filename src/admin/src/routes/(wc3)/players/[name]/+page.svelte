@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { enhance } from '$app/forms';
+	import { submit } from '$lib/submit';
+	import { Button } from '$lib/components/ui/button';
 	import DurationReason from '$lib/DurationReason.svelte';
-	import Flash from '$lib/Flash.svelte';
 	import { localDateTime, until } from '$lib/format';
 	import { findIcon, iconSrc, RACES } from '$lib/icons';
 	import { button, input, small } from '$lib/styles';
 
-	let { data, form } = $props();
-	let saving = $state(false);
+	let { data } = $props();
 	let mounted = $state(false);
 	onMount(() => (mounted = true));
 	const p = $derived(data.player);
@@ -111,7 +110,7 @@
 	</div>
 </section>
 
-<form method="POST" action="?/save" use:enhance={() => { saving = true; return async ({ update }) => { await update({ reset: false }); saving = false; }; }}>
+<form method="POST" action="?/save" use:submit={{ reset: false }}>
 	<h2 class="mb-2 flex items-center gap-3 font-medium">
 		WC3 TFT ladder
 		<button
@@ -173,50 +172,46 @@
 	</div>
 	<p class="mb-6 text-xs text-zinc-400">Sets Record\W3XP\userselected_icon; overrides rank icon. Player must rejoin channel / relog to see change.</p>
 
-	<button class={button} disabled={saving}>{saving ? 'Saving… (pvpgn rate limit, ~1s per change)' : 'Save changes'}</button>
-	<Flash {form} name="player" />
+	<Button type="submit" loadingText="Saving… (pvpgn rate limit, ~1s per change)">Save changes</Button>
 </form>
 
 <section class="mt-10 max-w-3xl space-y-6">
 	<h2 class="font-medium">Actions</h2>
 
 	{#if data.online}
-		<form method="POST" action="?/kick" use:enhance class="flex flex-wrap items-center gap-2">
+		<form method="POST" action="?/kick" use:submit class="flex flex-wrap items-center gap-2">
 			<span class="w-20 text-sm text-zinc-400">Kick</span>
 			<select name="minutes" class="{input} w-40">
 				{#each KICK_BANS as [m, label]}<option value={m}>{label}</option>{/each}
 			</select>
 			<button class={button}>Kick</button>
-			<Flash {form} name="kick" />
 		</form>
 	{/if}
 
 	{#each [['lock', 'Lock', d.locked], ['mute', 'Mute', d.muted]] as const as [name, verb, active]}
 		<div>
 			{#if active}
-				<form method="POST" action="?/un{name}" use:enhance class="flex flex-wrap items-center gap-2">
+				<form method="POST" action="?/un{name}" use:submit class="flex flex-wrap items-center gap-2">
 					<span class="w-20 text-sm text-zinc-400">{verb}</span>
 					<button class={button}>Un{name}</button>
 				</form>
 			{:else}
-				<form method="POST" action="?/{name}" use:enhance class="flex flex-wrap items-center gap-2">
+				<form method="POST" action="?/{name}" use:submit class="flex flex-wrap items-center gap-2">
 					<span class="w-20 text-sm text-zinc-400">{verb}</span>
 					<DurationReason />
 					<button class={button}>{verb}</button>
 				</form>
 			{/if}
-			<Flash {form} {name} />
 		</div>
 	{/each}
 
 	<div>
-		<form method="POST" action="?/chpass" use:enhance class="flex flex-wrap items-center gap-2">
+		<form method="POST" action="?/chpass" use:submit class="flex flex-wrap items-center gap-2">
 			<span class="w-20 text-sm text-zinc-400">Password</span>
 			<input name="password" bind:value={newPass} required minlength="3" placeholder="New password" autocomplete="new-password" class="{input} w-48 font-mono" />
 			<button type="button" class={small} onclick={genPass}>Generate</button>
 			<button class={button}>Set password</button>
 		</form>
-		<Flash {form} name="chpass" />
 	</div>
 
 	{#if !data.deleted}
@@ -224,14 +219,13 @@
 			<form
 				method="POST"
 				action="?/delete"
-				use:enhance={({ cancel }) => { if (!confirm(`Delete ${p.username}? Locks permanently and kicks; unlock to restore.`)) cancel(); }}
+				use:submit={{ confirm: { title: `Delete ${p.username}? Locks permanently and kicks; unlock to restore.`, destructive: true } }}
 				class="flex flex-wrap items-center gap-2"
 			>
 				<span class="w-20 text-sm text-zinc-400">Delete</span>
 				<button class="rounded bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500">Delete account</button>
 				<span class="text-xs text-zinc-400">Soft delete: permanent lock + kick. Unlock to restore.</span>
 			</form>
-			<Flash {form} name="delete" />
 		</div>
 	{/if}
 </section>

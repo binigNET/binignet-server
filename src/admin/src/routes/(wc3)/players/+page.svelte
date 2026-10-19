@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { submit } from '$lib/submit';
 	import { onMount } from 'svelte';
-	import Flash from '$lib/Flash.svelte';
 	import { ago, localDateTime } from '$lib/format';
 	import { button, input, small } from '$lib/styles';
 	import { autoRefresh } from '$lib/refresh.svelte';
 
-	let { data, form } = $props();
+	let { data } = $props();
 	// page 1 is the live view; later pages and searches stay still while browsing
 	autoRefresh(15_000, () => data.page === 1 && !data.q);
 
@@ -81,10 +80,9 @@
 
 <section class="mt-10">
 	<h2 class="mb-2 font-medium">Create player</h2>
-	<form method="POST" action="?/create" use:enhance class="flex flex-wrap gap-2">
+	<form method="POST" action="?/create" use:submit class="flex flex-wrap gap-2">
 		<input name="user" required maxlength="15" placeholder="Username" autocomplete="off" class="{input} w-44" />
 		<input name="password" required minlength="3" placeholder="Password" autocomplete="new-password" class="{input} w-44" />
 		<button class={button}>Create</button>
 	</form>
-	<Flash {form} name="create" />
 </section>

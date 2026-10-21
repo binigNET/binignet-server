@@ -15,7 +15,7 @@
 		<form method="POST" class="flex flex-col gap-3">
 			<div class="grid gap-1.5">
 				<Label for="username">Username</Label>
-				<Input id="username" name="username" autocomplete="username" required />
+				<Input id="username" name="username" autocomplete="username" placeholder="Battle.net account" required />
 			</div>
 			<div class="grid gap-1.5">
 				<Label for="password">Password</Label>

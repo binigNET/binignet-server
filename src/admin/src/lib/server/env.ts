@@ -11,6 +11,8 @@ const HLDS_PORTS: Record<GameId, number> = { cs: 27015, hldm: 27016 };
 
 export const config = {
 	adminPassword: () => req('ADMIN_PASSWORD'),
+	// PLAYER_LOGIN=off: no pvpgn-account logins, existing player sessions rejected
+	playerLogin: () => env.PLAYER_LOGIN !== 'off',
 	db: () => ({
 		host: env.DB_HOST || 'pvpgn-db',
 		database: env.DB_NAME || 'bnetd',

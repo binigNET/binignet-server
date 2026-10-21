@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import * as Alert from '$lib/components/ui/alert';
 	import { HLDS_GAMES } from '$lib/games';
+	import { canAccess } from '$lib/access';
 	import { latest } from '$lib/latest.svelte';
 	import NavTabs from '$lib/NavTabs.svelte';
 	import { under } from '$lib/nav';
@@ -21,11 +22,13 @@
 				[`${base}/console`, 'Console'],
 				[`${base}/logs`, 'Logs']
 			] as const
-		).map(([href, label]) => ({
-			href,
-			label,
-			active: href === base ? page.url.pathname === base : under(page.url.pathname, href)
-		}))
+		)
+			.filter(([href]) => canAccess(data.user!.role, href))
+			.map(([href, label]) => ({
+				href,
+				label,
+				active: href === base ? page.url.pathname === base : under(page.url.pathname, href)
+			}))
 	);
 	const server = latest(() => data.server);
 	const s = $derived(server.value);

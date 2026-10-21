@@ -79,7 +79,7 @@ To see the defaults: `docker run --rm --entrypoint cat ender25/pvpgn-server:bnet
 Files the admin dashboard edits (bans, motd/news under `i18n/`, `ad.json` + `files/`, `channel.conf`, `topics.json`, `icons.conf`) live in `./pvpgn/admin` instead. They're seeded from the image on first start and never overwritten, so edit them there and apply live from the dashboard or with `/rehash <mode>`.
 
 ### 🛡 Admin dashboard
-Web UI at `https://bnetadmin.bubuyogg.com` (`ADMIN_DOMAIN`), served by Caddy with automatic HTTPS. Login user `admin`.
+Web UI at `https://bnetadmin.bubuyogg.com` (`ADMIN_DOMAIN`), served by Caddy with automatic HTTPS. Login user `admin`; players can log in with their Battle.net account to use WC3 Games and the CS/HLDM Server page (set `PLAYER_LOGIN=off` in `.env` to disable).
 1. DNS: add an A record `bnetadmin` → VPS IP, **DNS only** (grey cloud) in Cloudflare. Open TCP `80`, `443` in the firewall.
 2. In `.env` set `ADMIN_PASSWORD` (`openssl rand -base64 24 | tr -d '/+=' | cut -c1-32`) and `PVPGN_ADMIN_PASS` (another random string). Add `binignet_admin` to `AURA_REALM1_SUDO_USERS`.
 3. Start pvpgn with the new config (`docker compose up -d --build pvpgn aura`), then create the dashboard's pvpgn account from your admin account in the game client:

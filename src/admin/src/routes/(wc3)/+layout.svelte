@@ -2,12 +2,15 @@
 	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import { page } from '$app/state';
 	import * as Alert from '$lib/components/ui/alert';
+	import { canAccess } from '$lib/access';
 	import NavTabs from '$lib/NavTabs.svelte';
 	import { WC3_LINKS, under } from '$lib/nav';
 
 	let { data, children } = $props();
 
-	const links = $derived(WC3_LINKS.map(([href, label]) => ({ href, label, active: under(page.url.pathname, href) })));
+	const links = $derived(
+		WC3_LINKS.filter(([href]) => canAccess(data.user!.role, href)).map(([href, label]) => ({ href, label, active: under(page.url.pathname, href) }))
+	);
 </script>
 
 <NavTabs {links} />

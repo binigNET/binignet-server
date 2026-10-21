@@ -13,6 +13,7 @@
 
 	let { data } = $props();
 	autoRefresh(10_000);
+	const admin = $derived(data.user?.role === 'admin');
 
 	const server = latest(() => data.server);
 	const maps = latest(() => data.maps);
@@ -94,90 +95,95 @@
 				<Button type="submit" size="sm" variant="outline">Set skill</Button>
 				<span class="text-xs text-muted-foreground">{sk.hint}</span>
 			</form>
-			<details class="text-sm">
-				<summary class="cursor-pointer text-muted-foreground">Defaults (server start)</summary>
-				<form method="POST" action="?/savebots" use:submit={{ reset: false }} class="mt-2 flex flex-wrap items-center gap-2">
-					<label class="flex items-center gap-1 text-xs">Bots <Input name="bots" type="number" min={0} max={31} value={data.botCfg.defaults.bots} class="h-7 w-16" /></label>
-					<label class="flex items-center gap-1 text-xs">Skill <Input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="h-7 w-16" /></label>
-					<Button type="submit" size="sm" variant="outline">Save as default</Button>
-				</form>
-			</details>
+			{#if admin}
+				<details class="text-sm">
+					<summary class="cursor-pointer text-muted-foreground">Defaults (server start)</summary>
+					<form method="POST" action="?/savebots" use:submit={{ reset: false }} class="mt-2 flex flex-wrap items-center gap-2">
+						<label class="flex items-center gap-1 text-xs">Bots <Input name="bots" type="number" min={0} max={31} value={data.botCfg.defaults.bots} class="h-7 w-16" /></label>
+						<label class="flex items-center gap-1 text-xs">Skill <Input name="skill" type="number" min={sk.min} max={sk.max} value={data.botCfg.defaults.skill} class="h-7 w-16" /></label>
+						<Button type="submit" size="sm" variant="outline">Save as default</Button>
+					</form>
+				</details>
+			{/if}
 		</Card.Content>
 	</Card.Root>
 </div>
 
-<Card.Root class="mb-6">
-	<Card.Header><Card.Title>Say</Card.Title></Card.Header>
-	<Card.Content>
-		<form method="POST" action="?/say" use:submit class="flex flex-wrap items-center gap-2">
-			<Input name="msg" required maxlength={190} placeholder="Message to all players" class="w-auto min-w-60 flex-1" />
-			<NativeSelect.Root name="mode" class="w-28">
-				<NativeSelect.Option value="chat">Chat</NativeSelect.Option>
-				<NativeSelect.Option value="center">Centre</NativeSelect.Option>
-				<NativeSelect.Option value="hud">HUD</NativeSelect.Option>
-			</NativeSelect.Root>
-			<Button type="submit">Send</Button>
-		</form>
-	</Card.Content>
-</Card.Root>
+<!-- say + player list (kick/ban): admin only -->
+{#if admin}
+	<Card.Root class="mb-6">
+		<Card.Header><Card.Title>Say</Card.Title></Card.Header>
+		<Card.Content>
+			<form method="POST" action="?/say" use:submit class="flex flex-wrap items-center gap-2">
+				<Input name="msg" required maxlength={190} placeholder="Message to all players" class="w-auto min-w-60 flex-1" />
+				<NativeSelect.Root name="mode" class="w-28">
+					<NativeSelect.Option value="chat">Chat</NativeSelect.Option>
+					<NativeSelect.Option value="center">Centre</NativeSelect.Option>
+					<NativeSelect.Option value="hud">HUD</NativeSelect.Option>
+				</NativeSelect.Root>
+				<Button type="submit">Send</Button>
+			</form>
+		</Card.Content>
+	</Card.Root>
 
-<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-muted-foreground">({players.length})</span></h2>
-{#if !server.value}
-	<div class="space-y-2"><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /></div>
-{:else if error}
-	<p class="text-sm text-warning">{error}</p>
-{:else if !players.length}
-	<p class="text-sm text-muted-foreground">No players online.</p>
-{:else}
-	<Table.Root>
-		<Table.Header>
-			<Table.Row>
-				<Table.Head>#</Table.Head><Table.Head>Name</Table.Head><Table.Head>ID</Table.Head><Table.Head>IP</Table.Head>
-				<Table.Head>Frags</Table.Head><Table.Head>Time</Table.Head><Table.Head>Ping</Table.Head><Table.Head></Table.Head>
-			</Table.Row>
-		</Table.Header>
-		<Table.Body>
-			{#each players as p (p.userid)}
+	<h2 class="mb-2 font-medium">Players <span class="text-sm font-normal text-muted-foreground">({players.length})</span></h2>
+	{#if !server.value}
+		<div class="space-y-2"><Skeleton class="h-8 w-full" /><Skeleton class="h-8 w-full" /></div>
+	{:else if error}
+		<p class="text-sm text-warning">{error}</p>
+	{:else if !players.length}
+		<p class="text-sm text-muted-foreground">No players online.</p>
+	{:else}
+		<Table.Root>
+			<Table.Header>
 				<Table.Row>
-					<Table.Cell class="text-muted-foreground">{p.userid}</Table.Cell>
-					<Table.Cell>{p.name}</Table.Cell>
-					<Table.Cell class="font-mono text-xs">{p.uniqueid}</Table.Cell>
-					<Table.Cell class="font-mono text-xs">{p.addr.replace(/:\d+$/, '')}</Table.Cell>
-					<Table.Cell>{p.frags}</Table.Cell>
-					<Table.Cell>{p.time}</Table.Cell>
-					<Table.Cell>{p.ping}</Table.Cell>
-					<Table.Cell>
-						<div class="flex justify-end gap-1">
-							<form method="POST" action="?/kick" use:submit>
-								<input type="hidden" name="userid" value={p.userid} />
-								<Button type="submit" size="sm" variant="outline">Kick</Button>
-							</form>
-							<Popover.Root>
-								<Popover.Trigger class={buttonVariants({ size: 'sm', variant: 'destructive' })}>Ban</Popover.Trigger>
-								<Popover.Content align="end" class="w-96">
-									<form
-										method="POST"
-										action="?/ban"
-										use:submit={{ confirm: { title: `Ban ${p.name}?`, destructive: true } }}
-										class="flex flex-wrap gap-2"
-									>
-										<input type="hidden" name="userid" value={p.userid} />
-										<input type="hidden" name="uniqueid" value={p.uniqueid} />
-										<input type="hidden" name="ip" value={p.addr.replace(/:\d+$/, '')} />
-										<NativeSelect.Root name="type" class="w-28">
-											<NativeSelect.Option value="both">ID + IP</NativeSelect.Option>
-											<NativeSelect.Option value="id">Steam ID</NativeSelect.Option>
-											<NativeSelect.Option value="ip">IP</NativeSelect.Option>
-										</NativeSelect.Root>
-										<DurationReason />
-										<Button type="submit" size="sm" variant="destructive">Ban {p.name}</Button>
-									</form>
-								</Popover.Content>
-							</Popover.Root>
-						</div>
-					</Table.Cell>
+					<Table.Head>#</Table.Head><Table.Head>Name</Table.Head><Table.Head>ID</Table.Head><Table.Head>IP</Table.Head>
+					<Table.Head>Frags</Table.Head><Table.Head>Time</Table.Head><Table.Head>Ping</Table.Head><Table.Head></Table.Head>
 				</Table.Row>
-			{/each}
-		</Table.Body>
-	</Table.Root>
+			</Table.Header>
+			<Table.Body>
+				{#each players as p (p.userid)}
+					<Table.Row>
+						<Table.Cell class="text-muted-foreground">{p.userid}</Table.Cell>
+						<Table.Cell>{p.name}</Table.Cell>
+						<Table.Cell class="font-mono text-xs">{p.uniqueid}</Table.Cell>
+						<Table.Cell class="font-mono text-xs">{p.addr.replace(/:\d+$/, '')}</Table.Cell>
+						<Table.Cell>{p.frags}</Table.Cell>
+						<Table.Cell>{p.time}</Table.Cell>
+						<Table.Cell>{p.ping}</Table.Cell>
+						<Table.Cell>
+							<div class="flex justify-end gap-1">
+								<form method="POST" action="?/kick" use:submit>
+									<input type="hidden" name="userid" value={p.userid} />
+									<Button type="submit" size="sm" variant="outline">Kick</Button>
+								</form>
+								<Popover.Root>
+									<Popover.Trigger class={buttonVariants({ size: 'sm', variant: 'destructive' })}>Ban</Popover.Trigger>
+									<Popover.Content align="end" class="w-96">
+										<form
+											method="POST"
+											action="?/ban"
+											use:submit={{ confirm: { title: `Ban ${p.name}?`, destructive: true } }}
+											class="flex flex-wrap gap-2"
+										>
+											<input type="hidden" name="userid" value={p.userid} />
+											<input type="hidden" name="uniqueid" value={p.uniqueid} />
+											<input type="hidden" name="ip" value={p.addr.replace(/:\d+$/, '')} />
+											<NativeSelect.Root name="type" class="w-28">
+												<NativeSelect.Option value="both">ID + IP</NativeSelect.Option>
+												<NativeSelect.Option value="id">Steam ID</NativeSelect.Option>
+												<NativeSelect.Option value="ip">IP</NativeSelect.Option>
+											</NativeSelect.Root>
+											<DurationReason />
+											<Button type="submit" size="sm" variant="destructive">Ban {p.name}</Button>
+										</form>
+									</Popover.Content>
+								</Popover.Root>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	{/if}
 {/if}

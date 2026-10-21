@@ -38,7 +38,7 @@ Conclusion: keep flattened image; add one shared "admin" dir for the mutable sub
 
 ## 2. Goals / non-goals
 Goals: one admin manages server live from browser anywhere.
-Non-goals: multi-user/roles, player self-service, audit log, new custom icons (`.bni` editing), multi-language motd, multiple rotating banners, restarts as part of any action, DB security hardening (separate backlog).
+Non-goals: multi-user/roles (beyond the restricted player login, §5.4), player self-service, audit log, new custom icons (`.bni` editing), multi-language motd, multiple rotating banners, restarts as part of any action, DB security hardening (separate backlog).
 
 ## 3. Features
 | # | Feature | Mechanism | Source of truth |
@@ -126,6 +126,10 @@ browser ──https──> caddy:443 ──> admin:3000 (SvelteKit/node)
 - Const-time compare; session cookie httpOnly, Secure, SameSite=Strict, 7d; logout.
 - Rate limit 5 fails / 15 min / IP (client IP from Caddy `X-Forwarded-For`).
 - CSRF: SvelteKit origin check (default on).
+- Player login: any other username = pvpgn account, checked read-only against `pvpgn_BNET` (SRP salt+verifier, `passhash1` if no SRP; ports in `lib/server/pvpgn/bnet-crypto.ts`, verify with `scripts/check-bnet.ts`). Locked accounts rejected.
+  - Sees only WC3 Games (host/unhost/owner) and CS/HLDM Server (map/restart/live bots; no say, player list, saved bot defaults). Rules in `lib/access.ts`, enforced in `hooks.server.ts`.
+  - Session re-checked every 60s: lock/delete/password change logs out (DB down: kept). Restart/map: 30s cooldown per game. Actions logged to stdout (`[player] …`).
+  - Rate limit: 5 fails / 15 min per username+IP, 20 per IP. `PLAYER_LOGIN=off` disables player logins and sessions.
 
 ### 5.5 Local dev override (gitignored)
 - `pvpgn-db` → named vol (mac case bug).

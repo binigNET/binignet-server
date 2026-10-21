@@ -206,6 +206,7 @@ services:
       # map uploads (8 MB) + multipart overhead
       - BODY_SIZE_LIMIT=10M
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD not set}
+      - PLAYER_LOGIN=${PLAYER_LOGIN:-on}
       - DB_NAME=${DB_NAME:-bnetd}
       - DB_USER=${DB_USER:-bnetd}
       - DB_PASS=${DB_PASS:-secret}

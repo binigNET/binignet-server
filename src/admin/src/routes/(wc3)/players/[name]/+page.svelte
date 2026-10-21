@@ -229,6 +229,10 @@
 			<Input name="password" bind:value={newPass} required minlength={3} placeholder="New password" autocomplete="new-password" class="w-48 font-mono" />
 			<Button variant="outline" onclick={genPass}>Generate</Button>
 			<Button type="submit">Set password</Button>
+			<!-- pvpgn /chpass sets passhash1 only; WC3 logs in via salt+verifier (set at signup / in-game change) -->
+			<p class="w-full text-xs text-warning">
+				Won't change the WC3 login: accounts that have logged in from WC3 keep their old password in-game and on this dashboard.
+			</p>
 		</form>
 
 		{#if !data.deleted}

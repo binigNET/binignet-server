@@ -183,6 +183,21 @@ services:
       - ./hldm/banned.cfg:/opt/steam/hlds/valve/banned.cfg
       - ./hldm/listip.cfg:/opt/steam/hlds/valve/listip.cfg
       - ./hldm/jk_botti.cfg:/opt/steam/hlds/valve/addons/jk_botti/jk_botti.cfg
+    # it can freeze w/o exiting (seen: stuck in steam tcpconnection asserts), so
+    # restart: never fires. A2S_INFO via bash /dev/udp (no python in this image);
+    # any reply = alive. autoheal restarts it once unhealthy (~3 min).
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - "exec 3<>/dev/udp/127.0.0.1/27016 && printf '\\xff\\xff\\xff\\xffTSource Engine Query\\x00' >&3 && read -r -t 8 -n 1 _ <&3 || exit 1"
+      interval: 60s
+      timeout: 15s
+      start_period: 90s
+      retries: 3
+    labels:
+      - autoheal=true
     networks:
       - internal
     logging:
@@ -242,6 +257,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - dockerapi
+
+  # restarts containers labelled autoheal=true when their healthcheck fails (hldm)
+  autoheal:
+    restart: unless-stopped
+    container_name: autoheal
+    image: willfarrell/autoheal:1.2.0@sha256:31f580ef0279eaced5b38d631b08c474d70d8403c1c2fdd6ddcf2e879d5f3f7c
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: none
 
   caddy:
     restart: unless-stopped
